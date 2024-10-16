@@ -1,0 +1,11 @@
+﻿# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/modules.xml
+/contentModel.xml
+/projectSettingsUpdater.xml
+/.idea.MeshCutTest.iml
+# Datasource local storage ignored files
+/../../../../../../../:\UnityReferences\MeshCut\MeshCutTest\.idea\.idea.MeshCutTest\.idea/dataSources/
+/dataSources.local.xml
