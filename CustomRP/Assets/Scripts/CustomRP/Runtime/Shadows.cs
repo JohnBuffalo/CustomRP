@@ -15,7 +15,8 @@ namespace HopsInAMaltDream
         private static int cascadeCountId = Shader.PropertyToID("_CascadeCount");
         private static int cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
         private static int shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
-        
+        int ShadowedDirectionalLightCount;
+
         const int maxShadowedDirectionalLightCount = 4, maxCascades = 4;
         private static Matrix4x4[] dirshadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
         private static Vector4[] cascadeCullingSpheres = new Vector4[maxCascades];
@@ -35,9 +36,8 @@ namespace HopsInAMaltDream
             public int visibleLightIndex;
         }
 
-        ShadowedDirectionalLight[] shadowedDirectionalLights = new ShadowedDirectionalLight[maxShadowedDirectionalLightCount];
+        ShadowedDirectionalLight[] ShadowedDirectionalLights = new ShadowedDirectionalLight[maxShadowedDirectionalLightCount];
 
-        int ShadowedDirectionalLightCount;
         public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings settings)
         {
             this.context = context;
@@ -58,11 +58,14 @@ namespace HopsInAMaltDream
                 light.shadows != LightShadows.None && light.shadowStrength > 0f &&
                 cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
             {
-                shadowedDirectionalLights[ShadowedDirectionalLightCount] = new ShadowedDirectionalLight
+                ShadowedDirectionalLights[ShadowedDirectionalLightCount] = new ShadowedDirectionalLight
                 {
                     visibleLightIndex = visibleLightIndex
                 };
-                return new Vector2(light.shadowStrength, settings.directional.cascadeCount * ShadowedDirectionalLightCount++);
+                return new Vector2(
+                    light.shadowStrength,
+                    settings.directional.cascadeCount * ShadowedDirectionalLightCount++
+                );
             }
 
             return Vector2.zero;
@@ -92,7 +95,7 @@ namespace HopsInAMaltDream
             int tiles = ShadowedDirectionalLightCount * settings.directional.cascadeCount;
             int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
             int tileSize = atlasSize / split;
-            for (int i = 0; i < maxShadowedDirectionalLightCount; i++)
+            for (int i = 0; i < ShadowedDirectionalLightCount; i++)
             {
                 RenderDirectionalShadows(i, split, tileSize);
             }
@@ -107,14 +110,13 @@ namespace HopsInAMaltDream
 
         void RenderDirectionalShadows(int index, int split, int tileSize)
         {
-            ShadowedDirectionalLight light = shadowedDirectionalLights[index];
+            ShadowedDirectionalLight light = ShadowedDirectionalLights[index];
             var shadowSettings = new ShadowDrawingSettings(cullingResults, light.visibleLightIndex, BatchCullingProjectionType.Orthographic);
             int cascadeCount = settings.directional.cascadeCount;
             int tileOffset = index * cascadeCount;
             Vector3 ratios = settings.directional.CascadeRatios;
 
-            for (int i = 0; i < cascadeCount; i++)
-            {
+            for (int i = 0; i < cascadeCount; i++) {
                 cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
                     light.visibleLightIndex, i, cascadeCount, ratios, tileSize, 0f,
                     out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix,
@@ -129,8 +131,10 @@ namespace HopsInAMaltDream
                     cascadeCullingSpheres[i] = cullingSphere;
                 }
                 int tileIndex = tileOffset + i;
-                dirshadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix,
-                    SetTileViewport(tileIndex, split, tileSize), split);
+                dirshadowMatrices[tileIndex] = ConvertToAtlasMatrix(
+                    projectionMatrix * viewMatrix,
+                    SetTileViewport(tileIndex, split, tileSize), split
+                );
                 buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
                 buffer.SetGlobalDepthBias(0f, 0f);
                 ExecuteBuffer();
@@ -141,7 +145,7 @@ namespace HopsInAMaltDream
 
         Vector2 SetTileViewport(int index, int split, float titleSize)
         {
-            Vector2 offset = new Vector2(index % split, index / split);
+            Vector2 offset = new Vector2(index % split, 1.0f*index / split);
             buffer.SetViewport(new Rect(
                 offset.x * titleSize, offset.y * titleSize, titleSize, titleSize));
 
