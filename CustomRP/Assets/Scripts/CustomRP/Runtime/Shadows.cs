@@ -15,13 +15,21 @@ namespace HopsInAMaltDream
         private static int cascadeCountId = Shader.PropertyToID("_CascadeCount");
         private static int cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
         private static int cascadeDataId = Shader.PropertyToID("_CascadeData");
+        private static int shadowAtlasSizeId = Shader.PropertyToID("_ShadowAtlasSize");
         private static int shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
+
+        static string[] directionalFilterKeywords = {
+            "_DIRECTIONAL_PCF3",
+            "_DIRECTIONAL_PCF5",
+            "_DIRECTIONAL_PCF7",
+        };
         int ShadowedDirectionalLightCount;
 
         const int maxShadowedDirectionalLightCount = 4, maxCascades = 4;
         private static Matrix4x4[] dirshadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
         private static Vector4[] cascadeCullingSpheres = new Vector4[maxCascades];
         private static Vector4[] cascadeData = new Vector4[maxCascades];
+
         CommandBuffer buffer = new CommandBuffer
         {
             name = bufferName
@@ -120,6 +128,9 @@ namespace HopsInAMaltDream
                 shadowDistanceFadeId, new Vector4(
                     1f / settings.maxDistance, 1f / settings.distanceFade,
                     1f / (1f - f * f)));
+
+            SetKeywords();
+            buffer.SetGlobalVector(shadowAtlasSizeId, new Vector4(atlasSize, 1f/atlasSize));
             buffer.EndSample(bufferName);
             ExecuteBuffer();
         }
@@ -158,14 +169,16 @@ namespace HopsInAMaltDream
                 buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
                 ExecuteBuffer();
                 context.DrawShadows(ref shadowSettings);
-                buffer.SetGlobalDepthBias(0f,0f);
+                buffer.SetGlobalDepthBias(0f, 0f);
             }
         }
 
         void SetCascadeData(int index, Vector4 cullingSphere, float tileSize)
         {
             float texelSize = 2f * cullingSphere.w / tileSize;
-            cascadeData[index] = new Vector4(1f / cullingSphere.w, texelSize * 1.4142136f);
+            float filterSize = texelSize * ((float) settings.directional.filterMode + 1f);
+            cascadeData[index] = new Vector4(1f / cullingSphere.w, filterSize * 1.4142136f);
+            cullingSphere.w -= filterSize;
             cullingSphere.w *= cullingSphere.w;
             cascadeCullingSpheres[index] = cullingSphere;
         }
@@ -202,6 +215,22 @@ namespace HopsInAMaltDream
             m.m22 = 0.5f * (m.m22 + m.m32);
             m.m23 = 0.5f * (m.m23 + m.m33);
             return m;
+        }
+
+        void SetKeywords()
+        {
+            int enabledIndex = (int)settings.directional.filterMode - 1;
+            for (int i = 0; i < directionalFilterKeywords.Length; i++)
+            {
+                if (i == enabledIndex)
+                {
+                    buffer.EnableShaderKeyword(directionalFilterKeywords[i]);
+                }
+                else
+                {
+                    buffer.DisableShaderKeyword(directionalFilterKeywords[i]);
+                }
+            }
         }
 
 
