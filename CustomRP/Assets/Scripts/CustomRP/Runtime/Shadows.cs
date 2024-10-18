@@ -86,8 +86,13 @@ namespace HopsInAMaltDream
         void RenderDirectionalShadows()
         {
             int atlasSize = (int)settings.directional.atlasSize;
-            buffer.GetTemporaryRT(dirShadowAtlasId, atlasSize, atlasSize, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
-            buffer.SetRenderTarget(dirShadowAtlasId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+            buffer.GetTemporaryRT(
+                dirShadowAtlasId, atlasSize, atlasSize, 
+                32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
+                );
+            buffer.SetRenderTarget(dirShadowAtlasId,
+                RenderBufferLoadAction.DontCare,
+                RenderBufferStoreAction.Store);
             buffer.ClearRenderTarget(true, false, Color.clear);
             buffer.BeginSample(bufferName);
             ExecuteBuffer();
@@ -103,7 +108,10 @@ namespace HopsInAMaltDream
             buffer.SetGlobalVectorArray(cascadeCullingSpheresId, cascadeCullingSpheres);
             buffer.SetGlobalMatrixArray(dirShadowMatricesId, dirshadowMatrices);
             float f = 1f - settings.directional.cascadeFade;
-            buffer.SetGlobalVector(shadowDistanceFadeId, new Vector4(1f/settings.maxDistance, 1f/settings.distanceFade,1f/(1f-f*f)));
+            buffer.SetGlobalVector(
+                shadowDistanceFadeId, new Vector4(
+                    1f/settings.maxDistance, 1f/settings.distanceFade,
+                    1f/(1f-f*f)));
             buffer.EndSample(bufferName);
             ExecuteBuffer();
         }
@@ -111,15 +119,19 @@ namespace HopsInAMaltDream
         void RenderDirectionalShadows(int index, int split, int tileSize)
         {
             ShadowedDirectionalLight light = ShadowedDirectionalLights[index];
-            var shadowSettings = new ShadowDrawingSettings(cullingResults, light.visibleLightIndex, BatchCullingProjectionType.Orthographic);
+            var shadowSettings = new ShadowDrawingSettings(
+                cullingResults, light.visibleLightIndex,
+                BatchCullingProjectionType.Orthographic
+                );
             int cascadeCount = settings.directional.cascadeCount;
             int tileOffset = index * cascadeCount;
             Vector3 ratios = settings.directional.CascadeRatios;
 
             for (int i = 0; i < cascadeCount; i++) {
                 cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
-                    light.visibleLightIndex, i, cascadeCount, ratios, tileSize, 0f,
-                    out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix,
+                    light.visibleLightIndex, i, cascadeCount, ratios, tileSize, 
+                    0f, out Matrix4x4 viewMatrix, 
+                    out Matrix4x4 projectionMatrix,
                     out ShadowSplitData splitData
                 );
 
@@ -145,17 +157,16 @@ namespace HopsInAMaltDream
 
         Vector2 SetTileViewport(int index, int split, float titleSize)
         {
-            Vector2 offset = new Vector2(index % split, 1.0f*index / split);
+            Vector2 offset = new Vector2(index % split, index / split);
             buffer.SetViewport(new Rect(
-                offset.x * titleSize, offset.y * titleSize, titleSize, titleSize));
-
+                offset.x * titleSize, offset.y * titleSize, titleSize, titleSize
+                ));
             return offset;
         }
 
         Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, int split)
         {
-            if (SystemInfo.usesReversedZBuffer)
-            {
+            if (SystemInfo.usesReversedZBuffer) {
                 m.m20 = -m.m20;
                 m.m21 = -m.m21;
                 m.m22 = -m.m22;
@@ -170,6 +181,10 @@ namespace HopsInAMaltDream
             m.m11 = (0.5f * (m.m11 + m.m31) + offset.y * m.m31) * scale;
             m.m12 = (0.5f * (m.m12 + m.m32) + offset.y * m.m32) * scale;
             m.m13 = (0.5f * (m.m13 + m.m33) + offset.y * m.m33) * scale;
+            m.m20 = 0.5f * (m.m20 + m.m30);
+            m.m21 = 0.5f * (m.m21 + m.m31);
+            m.m22 = 0.5f * (m.m22 + m.m32);
+            m.m23 = 0.5f * (m.m23 + m.m33);
             return m;
         }
 
