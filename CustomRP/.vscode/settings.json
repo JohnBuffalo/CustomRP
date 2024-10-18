@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "HopsInMaltDream.sln"
+    "dotnet.defaultSolution": "CustomRP.sln"
 }

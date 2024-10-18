@@ -14,12 +14,14 @@ namespace HopsInAMaltDream
         private static int dirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
         private static int cascadeCountId = Shader.PropertyToID("_CascadeCount");
         private static int cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
+        private static int cascadeDataId = Shader.PropertyToID("_CascadeData");
         private static int shadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
         int ShadowedDirectionalLightCount;
 
         const int maxShadowedDirectionalLightCount = 4, maxCascades = 4;
         private static Matrix4x4[] dirshadowMatrices = new Matrix4x4[maxShadowedDirectionalLightCount * maxCascades];
         private static Vector4[] cascadeCullingSpheres = new Vector4[maxCascades];
+        private static Vector4[] cascadeData = new Vector4[maxCascades];
         CommandBuffer buffer = new CommandBuffer
         {
             name = bufferName
@@ -34,6 +36,8 @@ namespace HopsInAMaltDream
         struct ShadowedDirectionalLight
         {
             public int visibleLightIndex;
+            public float slopeScaleBias;
+            public float nearPlaneOffset;
         }
 
         ShadowedDirectionalLight[] ShadowedDirectionalLights = new ShadowedDirectionalLight[maxShadowedDirectionalLightCount];
@@ -52,7 +56,7 @@ namespace HopsInAMaltDream
             buffer.Clear();
         }
 
-        public Vector2 ReserveDirectionalShadows(Light light, int visibleLightIndex)
+        public Vector3 ReserveDirectionalShadows(Light light, int visibleLightIndex)
         {
             if (ShadowedDirectionalLightCount < maxShadowedDirectionalLightCount &&
                 light.shadows != LightShadows.None && light.shadowStrength > 0f &&
@@ -60,15 +64,18 @@ namespace HopsInAMaltDream
             {
                 ShadowedDirectionalLights[ShadowedDirectionalLightCount] = new ShadowedDirectionalLight
                 {
-                    visibleLightIndex = visibleLightIndex
+                    visibleLightIndex = visibleLightIndex,
+                    slopeScaleBias = light.shadowBias,
+                    nearPlaneOffset = light.shadowNearPlane
                 };
-                return new Vector2(
+                return new Vector3(
                     light.shadowStrength,
-                    settings.directional.cascadeCount * ShadowedDirectionalLightCount++
+                    settings.directional.cascadeCount * ShadowedDirectionalLightCount++,
+                    light.shadowNormalBias
                 );
             }
 
-            return Vector2.zero;
+            return Vector3.zero;
         }
 
         public void Render()
@@ -87,7 +94,7 @@ namespace HopsInAMaltDream
         {
             int atlasSize = (int)settings.directional.atlasSize;
             buffer.GetTemporaryRT(
-                dirShadowAtlasId, atlasSize, atlasSize, 
+                dirShadowAtlasId, atlasSize, atlasSize,
                 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
                 );
             buffer.SetRenderTarget(dirShadowAtlasId,
@@ -106,12 +113,13 @@ namespace HopsInAMaltDream
             }
             buffer.SetGlobalInt(cascadeCountId, settings.directional.cascadeCount);
             buffer.SetGlobalVectorArray(cascadeCullingSpheresId, cascadeCullingSpheres);
+            buffer.SetGlobalVectorArray(cascadeDataId, cascadeData);
             buffer.SetGlobalMatrixArray(dirShadowMatricesId, dirshadowMatrices);
             float f = 1f - settings.directional.cascadeFade;
             buffer.SetGlobalVector(
                 shadowDistanceFadeId, new Vector4(
-                    1f/settings.maxDistance, 1f/settings.distanceFade,
-                    1f/(1f-f*f)));
+                    1f / settings.maxDistance, 1f / settings.distanceFade,
+                    1f / (1f - f * f)));
             buffer.EndSample(bufferName);
             ExecuteBuffer();
         }
@@ -127,10 +135,11 @@ namespace HopsInAMaltDream
             int tileOffset = index * cascadeCount;
             Vector3 ratios = settings.directional.CascadeRatios;
 
-            for (int i = 0; i < cascadeCount; i++) {
+            for (int i = 0; i < cascadeCount; i++)
+            {
                 cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
-                    light.visibleLightIndex, i, cascadeCount, ratios, tileSize, 
-                    0f, out Matrix4x4 viewMatrix, 
+                    light.visibleLightIndex, i, cascadeCount, ratios, tileSize,
+                    light.nearPlaneOffset, out Matrix4x4 viewMatrix,
                     out Matrix4x4 projectionMatrix,
                     out ShadowSplitData splitData
                 );
@@ -138,9 +147,7 @@ namespace HopsInAMaltDream
                 shadowSettings.splitData = splitData;
                 if (index == 0)
                 {
-                    Vector4 cullingSphere = splitData.cullingSphere;
-                    cullingSphere.w *= cullingSphere.w;
-                    cascadeCullingSpheres[i] = cullingSphere;
+                    SetCascadeData(i, splitData.cullingSphere, tileSize);
                 }
                 int tileIndex = tileOffset + i;
                 dirshadowMatrices[tileIndex] = ConvertToAtlasMatrix(
@@ -148,11 +155,19 @@ namespace HopsInAMaltDream
                     SetTileViewport(tileIndex, split, tileSize), split
                 );
                 buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
-                buffer.SetGlobalDepthBias(0f, 0f);
+                buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
                 ExecuteBuffer();
                 context.DrawShadows(ref shadowSettings);
                 buffer.SetGlobalDepthBias(0f,0f);
             }
+        }
+
+        void SetCascadeData(int index, Vector4 cullingSphere, float tileSize)
+        {
+            float texelSize = 2f * cullingSphere.w / tileSize;
+            cascadeData[index] = new Vector4(1f / cullingSphere.w, texelSize * 1.4142136f);
+            cullingSphere.w *= cullingSphere.w;
+            cascadeCullingSpheres[index] = cullingSphere;
         }
 
         Vector2 SetTileViewport(int index, int split, float titleSize)
@@ -166,7 +181,8 @@ namespace HopsInAMaltDream
 
         Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, int split)
         {
-            if (SystemInfo.usesReversedZBuffer) {
+            if (SystemInfo.usesReversedZBuffer)
+            {
                 m.m20 = -m.m20;
                 m.m21 = -m.m21;
                 m.m22 = -m.m22;
