@@ -8,6 +8,11 @@ namespace HopsInAMaltDream.Editor
 {
     public class CustomShaderGUI : ShaderGUI
     {
+        enum ShadowMode
+        {
+            On,Clip,Dither,Off
+        }
+        
         MaterialEditor editor;
         Object[] materials;
         MaterialProperty[] properties;
@@ -49,10 +54,23 @@ namespace HopsInAMaltDream.Editor
             }
         }
 
+        ShadowMode Shadows
+        {
+            set
+            {
+                if (SetProperty("_Shadows", (float) value))
+                {
+                    SetKeyword("_SHADOWS_CLIP", value == ShadowMode.Clip);
+                    SetKeyword("_SHADOWS_DITHER", value == ShadowMode.Dither);
+                }
+            }
+        }
+
         private bool showPresets;
 
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
+            EditorGUI.BeginChangeCheck();
             base.OnGUI(materialEditor, properties);
             this.editor = materialEditor;
             this.materials = materialEditor.targets;
@@ -66,6 +84,10 @@ namespace HopsInAMaltDream.Editor
                 ClipPreset();
                 FadePreset();
                 TransparentPreset();
+            }
+            
+            if (EditorGUI.EndChangeCheck()) {
+                SetShadowCasterPass();
             }
         }
 
@@ -106,6 +128,20 @@ namespace HopsInAMaltDream.Editor
 
         bool HasProperty(string name) => FindProperty(name, properties, false) != null;
 
+        void SetShadowCasterPass()
+        {
+            MaterialProperty shadows = FindProperty("_Shadows", properties, false);
+            if (shadows == null || shadows.hasMixedValue)
+            {
+                return;
+            }
+
+            bool enabled = shadows.floatValue < (float) ShadowMode.Off;
+            foreach (Material m in materials) {
+                m.SetShaderPassEnabled("ShadowCaster", enabled);
+            }
+        }
+#region Preset
         bool PresetButton(string name)
         {
             if (GUILayout.Button(name))
@@ -127,6 +163,7 @@ namespace HopsInAMaltDream.Editor
                 DstBlend = BlendMode.Zero;
                 ZWrite = true;
                 RenderQueue = RenderQueue.Geometry;
+                Shadows = ShadowMode.On;
             }
         }
 
@@ -140,6 +177,7 @@ namespace HopsInAMaltDream.Editor
                 DstBlend = BlendMode.Zero;
                 ZWrite = true;
                 RenderQueue = RenderQueue.AlphaTest;
+                Shadows = ShadowMode.Clip;
             }
         }
 
@@ -153,6 +191,7 @@ namespace HopsInAMaltDream.Editor
                 DstBlend = BlendMode.OneMinusSrcAlpha;
                 ZWrite = false;
                 RenderQueue = RenderQueue.Transparent;
+                Shadows = ShadowMode.Dither;
             }
         }
 
@@ -166,7 +205,9 @@ namespace HopsInAMaltDream.Editor
                 DstBlend = BlendMode.OneMinusSrcAlpha;
                 ZWrite = false;
                 RenderQueue = RenderQueue.Transparent;
+                Shadows = ShadowMode.Dither;
             }
         }
+#endregion Preset
     }
 }
