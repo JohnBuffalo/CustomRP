@@ -7,6 +7,8 @@ Shader "HopsInAMaltDream/CustomRP/Lit"
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
         _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+        [NoScaleOffset] _EmissionMap("Emission Map", 2D) = "white" {}
+        [HDR] _EmissionColor("Emission Color", Color) = (0.0, 0.0, 0.0, 1.0)
         [Toggle(_CLIPPING)] _Clipping("Alpha Clipping", Float) = 0
         [KeywordEnum(On, Clip, Dither, Off)] _Shadows ("Shadows", Float) = 0
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Float) = 1
@@ -14,6 +16,9 @@ Shader "HopsInAMaltDream/CustomRP/Lit"
         [Enum(Off, 0, On, 1)] _ZWrite("Z Write", Float) = 1
         [Toggle(_PREMULTIPLY_ALPHA)] _PremulAlpha("Premul Alpha", Float) = 0
         [Toggle(_RECEIVE_SHADOWS)] _ReceiveShadows ("Receive Shadows", Float) = 1
+        
+        [HideInInspector] _MainTex("Texture for Lightmap", 2D) = "white" {}
+		[HideInInspector] _Color("Color for Lightmap", Color) = (0.5, 0.5, 0.5, 1.0)
 
     }
     SubShader

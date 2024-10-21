@@ -39,6 +39,8 @@ float4 MetaPassFragment (Varyings input) : SV_TARGET {
 	float4 meta = 0.0;
 	if (unity_MetaFragmentControl.x) {
 		meta = float4(brdf.diffuse, 1.0);
+	}else if (unity_MetaFragmentControl.y) {
+		meta = float4(GetEmission(input.baseUV), 1.0);
 	}
 	meta.rgb += brdf.specular * brdf.roughness * 0.5;
 	meta.rgb = min(

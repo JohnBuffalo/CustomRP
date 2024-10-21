@@ -10,9 +10,9 @@ namespace HopsInAMaltDream.Editor
     {
         enum ShadowMode
         {
-            On,Clip,Dither,Off
+            On, Clip, Dither, Off
         }
-        
+
         MaterialEditor editor;
         Object[] materials;
         MaterialProperty[] properties;
@@ -30,12 +30,12 @@ namespace HopsInAMaltDream.Editor
 
         BlendMode SrcBlend
         {
-            set => SetProperty("_SrcBlend", (float) value);
+            set => SetProperty("_SrcBlend", (float)value);
         }
 
         BlendMode DstBlend
         {
-            set => SetProperty("_DstBlend", (float) value);
+            set => SetProperty("_DstBlend", (float)value);
         }
 
         bool ZWrite
@@ -49,7 +49,7 @@ namespace HopsInAMaltDream.Editor
             {
                 foreach (Material m in materials)
                 {
-                    m.renderQueue = (int) value;
+                    m.renderQueue = (int)value;
                 }
             }
         }
@@ -58,7 +58,7 @@ namespace HopsInAMaltDream.Editor
         {
             set
             {
-                if (SetProperty("_Shadows", (float) value))
+                if (SetProperty("_Shadows", (float)value))
                 {
                     SetKeyword("_SHADOWS_CLIP", value == ShadowMode.Clip);
                     SetKeyword("_SHADOWS_DITHER", value == ShadowMode.Dither);
@@ -76,6 +76,7 @@ namespace HopsInAMaltDream.Editor
             this.materials = materialEditor.targets;
             this.properties = properties;
 
+            BakedEmission();
             EditorGUILayout.Space();
             showPresets = EditorGUILayout.Foldout(showPresets, "Presets ", true);
             if (showPresets)
@@ -85,16 +86,19 @@ namespace HopsInAMaltDream.Editor
                 FadePreset();
                 TransparentPreset();
             }
-            
-            if (EditorGUI.EndChangeCheck()) {
+
+            if (EditorGUI.EndChangeCheck())
+            {
                 SetShadowCasterPass();
+                CopyLightMappingProperties();
             }
         }
 
         bool SetProperty(string name, float value)
         {
-            MaterialProperty property = FindProperty(name, properties,false);
-            if(property!=null){
+            MaterialProperty property = FindProperty(name, properties, false);
+            if (property != null)
+            {
                 property.floatValue = value;
                 return true;
             }
@@ -103,7 +107,8 @@ namespace HopsInAMaltDream.Editor
 
         void SetProperty(string name, string keyword, bool value)
         {
-            if(SetProperty(name, value ? 1f : 0f)){
+            if (SetProperty(name, value ? 1f : 0f))
+            {
                 SetKeyword(keyword, value);
             }
         }
@@ -136,12 +141,44 @@ namespace HopsInAMaltDream.Editor
                 return;
             }
 
-            bool enabled = shadows.floatValue < (float) ShadowMode.Off;
-            foreach (Material m in materials) {
+            bool enabled = shadows.floatValue < (float)ShadowMode.Off;
+            foreach (Material m in materials)
+            {
                 m.SetShaderPassEnabled("ShadowCaster", enabled);
             }
         }
-#region Preset
+
+        void CopyLightMappingProperties()
+        {
+            MaterialProperty mainTex = FindProperty("_MainTex", properties, false);
+            MaterialProperty baseMap = FindProperty("_BaseMap", properties, false);
+            if (mainTex != null && baseMap != null)
+            {
+                mainTex.textureValue = baseMap.textureValue;
+                mainTex.textureScaleAndOffset = baseMap.textureScaleAndOffset;
+            }
+            MaterialProperty color = FindProperty("_Color", properties, false);
+            MaterialProperty baseColor = FindProperty("_BaseColor", properties, false);
+            if (color != null && baseColor != null)
+            {
+                color.colorValue = baseColor.colorValue;
+            }
+        }
+
+        void BakedEmission()
+        {
+            EditorGUI.BeginChangeCheck();
+            editor.LightmapEmissionProperty();
+            if (EditorGUI.EndChangeCheck())
+            {
+                foreach (Material m in editor.targets)
+                {
+                    m.globalIlluminationFlags &=
+                        ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                }
+            }
+        }
+        #region Preset
         bool PresetButton(string name)
         {
             if (GUILayout.Button(name))
@@ -208,6 +245,6 @@ namespace HopsInAMaltDream.Editor
                 Shadows = ShadowMode.Dither;
             }
         }
-#endregion Preset
+        #endregion Preset
     }
 }
