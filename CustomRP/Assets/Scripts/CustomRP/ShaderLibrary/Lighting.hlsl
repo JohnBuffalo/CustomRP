@@ -10,8 +10,8 @@ float3 GetLighting(Surface surfaceWS, BRDF brdf, Light light) {
 	return IncomingLight(surfaceWS, light) * DirectBRDF(surfaceWS, brdf, light);
 }
 
-float3 GetLighting(Surface surfaceWS, BRDF brdf) {
-	float3 color = 0.0;
+float3 GetLighting(Surface surfaceWS, BRDF brdf, GI gi) {
+	float3 color = gi.diffuse * brdf.diffuse;
 	ShadowData shadowData = GetShadowData(surfaceWS);
 	for (int i = 0; i < GetDirectionalLightCount(); i++) {
 		Light light = GetDirectionalLight(i, surfaceWS, shadowData); 

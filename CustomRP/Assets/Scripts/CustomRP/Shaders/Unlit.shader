@@ -12,6 +12,10 @@ Shader "HopsInAMaltDream/CustomRP/Unlit"
     }
     SubShader
     {
+        HLSLINCLUDE
+        #include "../ShaderLibrary/Common.hlsl"
+        #include "../ShaderLibrary/UnlitInput.hlsl"
+        ENDHLSL
         Pass
         {
             Blend [_SrcBlend] [_DstBlend]
@@ -41,6 +45,20 @@ Shader "HopsInAMaltDream/CustomRP/Unlit"
             #include "ShadowCasterPass.hlsl"
             ENDHLSL
         }
+        Pass {
+			Tags {
+				"LightMode" = "Meta"
+			}
+
+			Cull Off
+
+			HLSLPROGRAM
+			#pragma target 3.5
+			#pragma vertex MetaPassVertex
+			#pragma fragment MetaPassFragment
+			#include "MetaPass.hlsl"
+			ENDHLSL
+		}
     }
 
     CustomEditor "HopsInAMaltDream.Editor.CustomShaderGUI"
