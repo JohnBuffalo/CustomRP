@@ -62,7 +62,9 @@ namespace HopsInAMaltDream {
             var drawingSettings = new DrawingSettings(unlitShaderTagId, sortingSettings){
                 enableDynamicBatching = useDynamicBating,
                 enableInstancing = useGPUInstancing,
-                perObjectData = PerObjectData.Lightmaps | PerObjectData.LightProbe | PerObjectData.LightProbeProxyVolume
+                perObjectData = PerObjectData.Lightmaps | PerObjectData.LightProbe | 
+                                PerObjectData.LightProbeProxyVolume | PerObjectData.ShadowMask | 
+                                PerObjectData.OcclusionProbe |PerObjectData.OcclusionProbeProxyVolume
             };
             drawingSettings.SetShaderPassName(1, litShaderTagId);
             // 创建过滤设置，包含所有渲染队列

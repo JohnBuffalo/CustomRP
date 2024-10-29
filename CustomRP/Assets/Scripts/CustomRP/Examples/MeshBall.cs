@@ -62,16 +62,18 @@ namespace HopsInAMaltDream.Examples
                 positions[i] = matrices[i].GetColumn(3);
             }
             var lightProbes = new SphericalHarmonicsL2[instanceCount];
+            var occlusionProbes = new Vector4[instanceCount];
             LightProbes.CalculateInterpolatedLightAndOcclusionProbes(
-                positions, lightProbes, null
+                positions, lightProbes, occlusionProbes
             );
-
+            block.CopySHCoefficientArraysFrom(lightProbes);
+            block.CopyProbeOcclusionArrayFrom(occlusionProbes);
             var lightProbeUsage = lightProbeVolume?LightProbeUsage.UseProxyVolume:LightProbeUsage.CustomProvided;
             LightProbes.CalculateInterpolatedLightAndOcclusionProbes(positions, lightProbes, null);
             Graphics.DrawMeshInstanced(mesh, 0, material, GetMatries(), instanceCount, block,
             ShadowCastingMode.On, true, 0, null, lightProbeUsage, lightProbeVolume);
 
-            block.CopySHCoefficientArraysFrom(lightProbes);
+
         }
 
 
