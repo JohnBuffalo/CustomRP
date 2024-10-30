@@ -7,6 +7,7 @@ Shader "HopsInAMaltDream/CustomRP/Lit"
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
         _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+    	_Fresnel("Fresnel",Range(0,1)) = 1
         [NoScaleOffset] _EmissionMap("Emission Map", 2D) = "white" {}
         [HDR] _EmissionColor("Emission Color", Color) = (0.0, 0.0, 0.0, 1.0)
         [Toggle(_CLIPPING)] _Clipping("Alpha Clipping", Float) = 0

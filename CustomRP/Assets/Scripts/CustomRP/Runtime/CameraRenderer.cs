@@ -64,7 +64,8 @@ namespace HopsInAMaltDream {
                 enableInstancing = useGPUInstancing,
                 perObjectData = PerObjectData.Lightmaps | PerObjectData.LightProbe | 
                                 PerObjectData.LightProbeProxyVolume | PerObjectData.ShadowMask | 
-                                PerObjectData.OcclusionProbe |PerObjectData.OcclusionProbeProxyVolume
+                                PerObjectData.OcclusionProbe |PerObjectData.OcclusionProbeProxyVolume |
+                                PerObjectData.ReflectionProbes
             };
             drawingSettings.SetShaderPassName(1, litShaderTagId);
             // 创建过滤设置，包含所有渲染队列
