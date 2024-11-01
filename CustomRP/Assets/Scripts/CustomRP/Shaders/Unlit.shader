@@ -1,4 +1,4 @@
-Shader "HopsInAMaltDream/CustomRP/Unlit"
+Shader "MaltsHopDream/CustomRP/Unlit"
 {
     Properties
     {
@@ -61,5 +61,5 @@ Shader "HopsInAMaltDream/CustomRP/Unlit"
 		}
     }
 
-    CustomEditor "HopsInAMaltDream.Editor.CustomShaderGUI"
+    CustomEditor "MaltsHopDream.Editor.CustomShaderGUI"
 }

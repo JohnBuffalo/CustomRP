@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 using UnityEditor;
 using UnityEngine.Profiling;
 
-namespace HopsInAMaltDream {
+namespace MaltsHopDream {
     public partial class CameraRenderer 
     {
 

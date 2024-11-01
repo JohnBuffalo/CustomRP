@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace HopsInAMaltDream {
+namespace MaltsHopDream {
     public partial class CameraRenderer 
     {
         private ScriptableRenderContext context;

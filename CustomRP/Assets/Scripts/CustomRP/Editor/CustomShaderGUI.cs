@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace HopsInAMaltDream.Editor
+namespace MaltsHopDream.Editor
 {
     public class CustomShaderGUI : ShaderGUI
     {

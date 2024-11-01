@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 
-namespace HopsInAMaltDream
+namespace MaltsHopDream
 {
     public class Shadows
     {

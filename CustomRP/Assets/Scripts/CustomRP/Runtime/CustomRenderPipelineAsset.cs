@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace HopsInAMaltDream {
-    [CreateAssetMenu(menuName = "Rendering/HopsInAMaltDream Render Pipeline")]
+namespace MaltsHopDream {
+    [CreateAssetMenu(menuName = "Rendering/MaltsHopDream Render Pipeline")]
     public class CustomRenderPipelineAsset : RenderPipelineAsset
     {
         [SerializeField]

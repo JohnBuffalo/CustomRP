@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HopsInAMaltDream
+namespace MaltsHopDream
 {
     [System.Serializable]
     public class ShadowSettings

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace HopsInAMaltDream.Examples
+namespace MaltsHopDream.Examples
 {
     public class TestMain : MonoBehaviour
     {

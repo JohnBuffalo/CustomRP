@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace HopsInAMaltDream {
+namespace MaltsHopDream {
     public class CustomRenderPipeline : RenderPipeline
     {
         bool useDynamicBating, useGPUInstancing;
