@@ -8,12 +8,12 @@ namespace MaltsHopDream {
     public class CustomRenderPipelineAsset : RenderPipelineAsset
     {
         [SerializeField]
-        bool useDynamicBating = true, useGPUInstancing = true, useSRPBatcher = true;
+        bool useDynamicBating = true, useGPUInstancing = true, useSRPBatcher = true, useLightPerObject = true;
         [SerializeField]
         private ShadowSettings shadows = default;
         protected override RenderPipeline CreatePipeline()
         {
-            return new CustomRenderPipeline(useDynamicBating, useGPUInstancing, useSRPBatcher, shadows);
+            return new CustomRenderPipeline(useDynamicBating, useGPUInstancing, useSRPBatcher, useLightPerObject,shadows);
         }
     }
 }

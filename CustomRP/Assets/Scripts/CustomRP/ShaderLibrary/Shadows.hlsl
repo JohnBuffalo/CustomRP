@@ -18,9 +18,9 @@
 #define MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT 4
 #define MAX_CASCADE_COUNT 4
 
-TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
+TEXTURE2D_SHADOW (_DirectionalShadowAtlas);
 #define SHADOW_SAMPLER sampler_linear_clamp_compare
-SAMPLER_CMP(SHADOW_SAMPLER);
+SAMPLER_CMP (SHADOW_SAMPLER);
 
 struct DirectionalShadowData
 {
@@ -29,6 +29,13 @@ struct DirectionalShadowData
     float normalBias;
     int shadowMaskChannel;
 };
+
+struct OtherShadowData
+{
+    float strength;
+    int shadowMaskChannel;
+};
+
 
 struct ShadowMask
 {
@@ -45,7 +52,7 @@ struct ShadowData
     ShadowMask shadowMask;
 };
 
-CBUFFER_START(_CustomShadows)
+CBUFFER_START (_CustomShadows)
 int _CascadeCount;
 float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
 float4 _CascadeData[MAX_CASCADE_COUNT];
@@ -104,10 +111,12 @@ float GetCascadedShadow(
     return shadow;
 }
 
-float GetBakedShadow (ShadowMask mask, int channel) {
+float GetBakedShadow(ShadowMask mask, int channel)
+{
     float shadow = 1.0;
-    if (mask.distance || mask.always) {
-        if(channel>=0)
+    if (mask.distance || mask.always)
+    {
+        if (channel >= 0)
         {
             shadow = mask.shadows[channel];
         }
@@ -115,21 +124,26 @@ float GetBakedShadow (ShadowMask mask, int channel) {
     return shadow;
 }
 
-float GetBakedShadow (ShadowMask mask, int channel, float strength) {
-    if (mask.distance || mask.always) {
-        return lerp(1.0, GetBakedShadow(mask,channel), strength);
+float GetBakedShadow(ShadowMask mask, int channel, float strength)
+{
+    if (mask.distance || mask.always)
+    {
+        return lerp(1.0, GetBakedShadow(mask, channel), strength);
     }
     return 1.0;
 }
 
-float MixBakedAndRealtimeShadows (ShadowData global, float shadow, int shadowMaskChannel,float strength) {
+float MixBakedAndRealtimeShadows(ShadowData global, float shadow, int shadowMaskChannel, float strength)
+{
     float baked = GetBakedShadow(global.shadowMask, shadowMaskChannel);
-    if (global.shadowMask.always) {
+    if (global.shadowMask.always)
+    {
         shadow = lerp(1.0, shadow, global.strength);
         shadow = min(baked, shadow);
         return lerp(1.0, shadow, strength);
     }
-    if (global.shadowMask.distance) {
+    if (global.shadowMask.distance)
+    {
         shadow = lerp(baked, shadow, global.strength);
         return lerp(1.0, shadow, strength);
     }
@@ -150,11 +164,30 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
     else
     {
         shadow = GetCascadedShadow(directional, global, surfaceWS);
-        shadow = MixBakedAndRealtimeShadows(global, shadow,  directional.shadowMaskChannel, directional.strength);
+        shadow = MixBakedAndRealtimeShadows(global, shadow, directional.shadowMaskChannel, directional.strength);
     }
     return shadow;
 }
 
+float GetOtherShadowAttenuation(OtherShadowData other, ShadowData global, Surface surfaceWS)
+{
+    #if !defined(_RECEIVE_SHADOWS)
+    return 1.0;
+    #endif
+
+    float shadow;
+    if (other.strength > 0.0)
+    {
+        shadow = GetBakedShadow(
+            global.shadowMask, other.shadowMaskChannel, other.strength
+        );
+    }
+    else
+    {
+        shadow = 1.0;
+    }
+    return shadow;
+}
 
 float FadedShadowStrength(float distance, float scale, float fade)
 {
