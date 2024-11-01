@@ -13,6 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _DETAIL_MAP
+  - _MASK_MAP
   - _NORMAL_MAP
   - _RECEIVE_SHADOWS
   m_InvalidKeywords:
@@ -84,28 +85,28 @@ Material:
     - _BumpScale: 1
     - _Clipping: 0
     - _Cutoff: 0.583
-    - _DetailAlbedo: 0.199
+    - _DetailAlbedo: 0.347
     - _DetailMapToggle: 1
     - _DetailNormalMapScale: 1
     - _DetailNormalScale: 0.737
     - _DetailSmoothness: 0.394
     - _DstBlend: 0
-    - _Fresnel: 0.481
+    - _Fresnel: 0.482
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _MaskMapToggle: 0
-    - _Metallic: 0.428
+    - _MaskMapToggle: 1
+    - _Metallic: 0.542
     - _Mode: 0
     - _NormalMapToggle: 1
     - _NormalScale: 0.926
-    - _Occlusion: 0.663
+    - _Occlusion: 0.798
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _PremulAlpha: 0
     - _ReceiveShadows: 1
     - _Shadows: 0
-    - _Smoothness: 0.697
+    - _Smoothness: 0.199
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
