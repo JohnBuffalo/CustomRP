@@ -7,8 +7,10 @@ namespace MaltsHopDream
     public class Lighting
     {
         private const string bufferName = "Lighting";
-        const int maxDirLightCount = 4, maxOtherLightCount = 64;
+        static string lightsPerObjectKeyword = "_LIGHTS_PER_OBJECT";
 
+        const int maxDirLightCount = 4, maxOtherLightCount = 64;
+        
         static int dirLightCountId = Shader.PropertyToID("_DirectionalLightCount"),
             dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors"),
             dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections"),
@@ -37,12 +39,12 @@ namespace MaltsHopDream
         CullingResults cullingResults;
         Shadows shadows = new Shadows();
 
-        public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings shadowSettings)
+        public void Setup(ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings shadowSettings, bool useLightsPerObject)
         {
             this.cullingResults = cullingResults;
             buffer.BeginSample(bufferName);
             shadows.Setup(context, cullingResults, shadowSettings);
-            SetupLights();
+            SetupLights(useLightsPerObject);
             shadows.Render();
             buffer.EndSample(bufferName);
             context.ExecuteCommandBuffer(buffer);
@@ -56,12 +58,16 @@ namespace MaltsHopDream
             dirLightShadowData[index] = shadows.ReserveDirectionalShadows(visibleLight.light, index);
         }
 
-        void SetupLights()
+        void SetupLights(bool useLightsPerObject)
         {
+            NativeArray<int> indexMap = useLightsPerObject ?
+                cullingResults.GetLightIndexMap(Allocator.Temp) : default;
             NativeArray<VisibleLight> visibleLights = cullingResults.visibleLights;
             int dirLightCount = 0, otherLightCount = 0;
-            for (int i = 0; i < visibleLights.Length; i++)
+            int i;
+            for (i = 0; i < visibleLights.Length; i++)
             {
+                int newIndex = -1;
                 VisibleLight visibleLight = visibleLights[i];
                 switch (visibleLight.lightType)
                 {
@@ -75,6 +81,7 @@ namespace MaltsHopDream
                     case LightType.Point:
                         if (otherLightCount < maxOtherLightCount)
                         {
+                            newIndex = otherLightCount;
                             SetupPointLight(otherLightCount++, ref visibleLight);
                         }
 
@@ -82,13 +89,34 @@ namespace MaltsHopDream
                     case LightType.Spot:
                         if (otherLightCount < maxOtherLightCount)
                         {
+                            newIndex = otherLightCount;
                             SetupSpotLight(otherLightCount++, ref visibleLight);
                         }
 
                         break;
                 }
+
+                if (useLightsPerObject)
+                {
+                    indexMap[i] = newIndex;
+                }
             }
 
+            if (useLightsPerObject)
+            {
+                for (; i < indexMap.Length; i++)
+                {
+                    indexMap[i] = -1;
+                }
+                cullingResults.SetLightIndexMap(indexMap);
+                indexMap.Dispose();
+                Shader.EnableKeyword(lightsPerObjectKeyword);
+            }
+            else
+            {
+                Shader.DisableKeyword(lightsPerObjectKeyword);
+            }
+            
             buffer.SetGlobalInt(dirLightCountId, dirLightCount);
             if (dirLightCount > 0)
             {
@@ -126,7 +154,7 @@ namespace MaltsHopDream
             position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
             otherLightPositions[index] = position;
             otherLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
-            
+
             Light light = visibleLight.light;
             float innerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * light.innerSpotAngle);
             float outerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * visibleLight.spotAngle);

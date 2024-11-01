@@ -38,7 +38,7 @@ namespace MaltsHopDream
 
             buffer.BeginSample(SampleName);
             ExecuteBuffer();
-            lighting.Setup(context, cullingResults, shadowSettings);
+            lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject);
             buffer.EndSample(SampleName);
             Setup();
             DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject);
