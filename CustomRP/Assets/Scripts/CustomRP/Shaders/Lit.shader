@@ -51,6 +51,7 @@ Shader "MaltsHopDream/CustomRP/Lit"
             ZWrite [_ZWrite]
             HLSLPROGRAM
             #pragma target 3.5
+            #pragma multi_compile _ _OTHER_PCF3 _OTHER_PCF5 _OTHER_PCF7
             #pragma multi_compile _ _LIGHTS_PER_OBJECT
             #pragma shader_feature _DETAIL_MAP
             #pragma shader_feature _MASK_MAP
