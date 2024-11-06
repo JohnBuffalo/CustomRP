@@ -24,7 +24,7 @@ namespace MaltsHopDream
 
         public void Render(ScriptableRenderContext context, Camera camera, bool useDynamicBating, bool useGPUInstancing,
             bool useLightPerObject,
-            ShadowSettings shadowSettings)
+            ShadowSettings shadowSettings,PostFXSettings postFXSettings)
         {
             this.context = context;
             this.camera = camera;

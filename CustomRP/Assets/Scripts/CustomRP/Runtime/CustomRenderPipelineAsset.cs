@@ -10,10 +10,14 @@ namespace MaltsHopDream {
         [SerializeField]
         bool useDynamicBating = true, useGPUInstancing = true, useSRPBatcher = true, useLightPerObject = true;
         [SerializeField]
-        private ShadowSettings shadows = default;
+        ShadowSettings shadows = default;
+        [SerializeField]
+        PostFXSettings postFXSettings = default;
         protected override RenderPipeline CreatePipeline()
         {
-            return new CustomRenderPipeline(useDynamicBating, useGPUInstancing, useSRPBatcher, useLightPerObject,shadows);
+            return new CustomRenderPipeline(useDynamicBating, useGPUInstancing, 
+                useSRPBatcher, useLightPerObject, 
+                shadows, postFXSettings);
         }
     }
 }
