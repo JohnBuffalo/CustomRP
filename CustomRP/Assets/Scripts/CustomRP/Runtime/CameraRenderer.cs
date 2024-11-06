@@ -19,12 +19,14 @@ namespace MaltsHopDream
         CullingResults cullingResults;
         static ShaderTagId unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
         static ShaderTagId litShaderTagId = new ShaderTagId("CustomLit");
+        private static int frameBufferId = Shader.PropertyToID("_CameraFrameBuffer");
 
-        Lighting lighting = new Lighting();
+        Lighting lighting = new();
+        PostFXStack postFXStack = new();
 
         public void Render(ScriptableRenderContext context, Camera camera, bool useDynamicBating, bool useGPUInstancing,
             bool useLightPerObject,
-            ShadowSettings shadowSettings,PostFXSettings postFXSettings)
+            ShadowSettings shadowSettings, PostFXSettings postFXSettings)
         {
             this.context = context;
             this.camera = camera;
@@ -39,12 +41,18 @@ namespace MaltsHopDream
             buffer.BeginSample(SampleName);
             ExecuteBuffer();
             lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject);
+            postFXStack.Setup(context, camera, postFXSettings);
             buffer.EndSample(SampleName);
             Setup();
             DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject);
             DrawUnsupportedShaders();
-            DrawGizmos();
-            lighting.Cleanup();
+            DrawGizmosBeforeFX();
+            if (postFXStack.IsActive)
+            {
+                postFXStack.Render(frameBufferId);
+            }
+            DrawGizmosAfterFX();
+            Cleanup();
             Submit();
         }
 
@@ -52,6 +60,18 @@ namespace MaltsHopDream
         {
             context.SetupCameraProperties(camera);
             CameraClearFlags flags = camera.clearFlags;
+
+            if (postFXStack.IsActive)
+            {
+                if (flags > CameraClearFlags.Color)
+                {
+                    flags = CameraClearFlags.Color;
+                }
+                buffer.GetTemporaryRT(frameBufferId, camera.pixelWidth, camera.pixelHeight, 32, FilterMode.Bilinear,
+                    RenderTextureFormat.Default);
+                buffer.SetRenderTarget(frameBufferId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+            }
+
             buffer.ClearRenderTarget(flags <= CameraClearFlags.Depth,
                 flags <= CameraClearFlags.Color,
                 flags == CameraClearFlags.Color ? camera.backgroundColor.linear : Color.clear);
@@ -111,6 +131,15 @@ namespace MaltsHopDream
         {
             context.ExecuteCommandBuffer(buffer);
             buffer.Clear();
+        }
+
+        private void Cleanup()
+        {
+            lighting.Cleanup();
+            if (postFXStack.IsActive)
+            {
+                buffer.ReleaseTemporaryRT(frameBufferId);
+            }
         }
 
         bool Cull(float maxShadowDistance)
