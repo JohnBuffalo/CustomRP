@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace MaltsHopDream
 {
@@ -31,7 +32,9 @@ namespace MaltsHopDream
             Soft,
             Dither
         }
-
+        
+        [Min(0.001f)] public float maxDistance = 100f;
+        [Range(0.001f, 1f)] public float distanceFade = 0.1f;
 
         [System.Serializable]
         public struct Directional
@@ -46,12 +49,7 @@ namespace MaltsHopDream
             public CascadeBlendMode cascadeBlend;
         }        
         
-
-        [Min(0.001f)] public float maxDistance = 100f;
-        [Range(0.001f, 1f)] public float distanceFade = 0.1f;
-
-
-        [System.Serializable]
+        [Serializable]
         public struct Other
         {
             public MapSize atlasSize;
@@ -75,5 +73,7 @@ namespace MaltsHopDream
             atlasSize = MapSize._1024,
             filter = FilterMode.PCF2x2
         };
+
+
     }
 }

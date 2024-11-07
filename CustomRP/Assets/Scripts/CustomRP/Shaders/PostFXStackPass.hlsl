@@ -28,7 +28,7 @@ Varyings DefaultPassVertex (uint vertexID : SV_VertexID) {
 }
 
 float4 GetSource(float2 screenUV) {
-    return SAMPLE_TEXTURE2D(_PostFXSource, sampler_linear_clamp, screenUV);
+    return SAMPLE_TEXTURE2D_LOD(_PostFXSource, sampler_linear_clamp, screenUV, 0);
 }
 
 float4 CopyPassFragment (Varyings input) : SV_TARGET {

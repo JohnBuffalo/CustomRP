@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System;
 
 namespace MaltsHopDream {
     public partial class CustomRenderPipeline : RenderPipeline
@@ -10,7 +11,6 @@ namespace MaltsHopDream {
         private CameraRenderer renderer = new ();
         private ShadowSettings shadowSettings;
         private PostFXSettings postFXSettings;
-        
         public CustomRenderPipeline(bool useDynamicBating, bool useGPUInstancing, 
             bool useSRPBatcher, bool useLightsPerObject, 
             ShadowSettings shadowSettings, PostFXSettings postFXSettings)

@@ -25,5 +25,20 @@ namespace MaltsHopDream
                 return material;
             }
         }
+                
+        [Serializable]
+        public struct BloomSettings
+        {
+            [Range(0f,16f)]
+            public int maxIterations;
+
+            [Min(1f)]
+            public int downscaleLimit;
+        
+        }
+        [SerializeField]
+        private BloomSettings bloom = default;
+
+        public BloomSettings Bloom => bloom;
     }
 }
