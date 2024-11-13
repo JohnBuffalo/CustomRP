@@ -15,6 +15,9 @@ namespace MaltsHopDream
             BloomScatterFinal,
             BloomPrefilter,
             BloomPrefilterFireflies,
+            ToneMappingACES,
+            ToneMappingNeutral,
+            ToneMappingReinhard,
             Copy
         }
         private const string buffName = "Post FX";
@@ -23,6 +26,7 @@ namespace MaltsHopDream
             bloomBucibicUpsamplingId = Shader.PropertyToID("_BloomBicubicUpsampling"),
             bloomIntensityId = Shader.PropertyToID("_BloomIntensity"),
             bloomPrefilterId = Shader.PropertyToID("_BloomPrefilter"),
+            bloomResultId = Shader.PropertyToID("_BloomResult"),
             bloomThresholdId = Shader.PropertyToID("_BloomThreshold"),
             fxSourceId = Shader.PropertyToID("_PostFXSource"),
             fxSource2Id = Shader.PropertyToID("_PostFXSource2");
@@ -62,7 +66,12 @@ namespace MaltsHopDream
 
         public void Render(int sourceId)
         {
-            DoBloom(sourceId);
+            if(DoBloom(sourceId)){  
+                DoToneMapping(bloomResultId);
+                buffer.ReleaseTemporaryRT(bloomResultId);
+            }else{
+                DoToneMapping(sourceId);
+            }
             context.ExecuteCommandBuffer(buffer);
             buffer.Clear();
         }
@@ -76,18 +85,17 @@ namespace MaltsHopDream
                 Matrix4x4.identity, settings.Material, (int)pass, MeshTopology.Triangles, 3);
         }
 
-        void DoBloom(int sourceId)
+        bool DoBloom(int sourceId)
         {
-            buffer.BeginSample("Bloom");
+           
             PostFXSettings.BloomSettings bloom = settings.Bloom;
             int width = camera.pixelWidth / 2, height = camera.pixelHeight / 2;
             if (bloom.maxIterations == 0 || bloom.bloomIntensity <= 0 || height < bloom.downscaleLimit * 2 || width < bloom.downscaleLimit * 2)
             {
-                Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Copy);
-                buffer.EndSample("Bloom");
-                return;
+                return false;
             }
 
+            buffer.BeginSample("Bloom");
             Vector4 threshold;
             threshold.x = Mathf.GammaToLinearSpace(bloom.threshold);
             threshold.y = threshold.x * bloom.thresholdKnee;
@@ -158,9 +166,17 @@ namespace MaltsHopDream
             }
             buffer.SetGlobalFloat(bloomIntensityId, finalIntensity);
             buffer.SetGlobalTexture(fxSource2Id, sourceId);
-            Draw(fromId, BuiltinRenderTextureType.CameraTarget, finalPass);
+            buffer.GetTemporaryRT(bloomResultId, camera.pixelWidth, camera.pixelHeight, 0, FilterMode.Bilinear, format);
+            Draw(fromId, bloomResultId, finalPass);
             buffer.ReleaseTemporaryRT(fromId);
             buffer.EndSample("Bloom");
+            return true;
+        }
+    
+        void DoToneMapping(int sourceId){
+            PostFXSettings.ToneMappingSettings.Mode mode = settings.ToneMapping.mode;
+            Pass pass = mode < 0 ? Pass.Copy : Pass.ToneMappingACES + (int)mode;
+            Draw(sourceId, BuiltinRenderTextureType.CameraTarget, pass);
         }
     }
 }
