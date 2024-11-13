@@ -10,7 +10,9 @@ namespace MaltsHopDream
         {
             BloomHorizontal,
             BloomVertical,
-            BloomCombine,
+            BloomAdd,
+            BloomScatter,
+            BloomScatterFinal,
             BloomPrefilter,
             BloomPrefilterFireflies,
             Copy
@@ -121,6 +123,21 @@ namespace MaltsHopDream
             }
             buffer.ReleaseTemporaryRT(bloomPrefilterId);
             buffer.SetGlobalFloat(bloomBucibicUpsamplingId, bloom.bicubicUpsampling ? 1f : 0f);
+            Pass combinePass, finalPass;
+            float finalIntensity;
+            if (bloom.mode == PostFXSettings.BloomSettings.Mode.Additive)
+            {
+                combinePass = finalPass = Pass.BloomAdd;
+                buffer.SetGlobalFloat(bloomIntensityId, bloom.bloomIntensity);
+                finalIntensity = bloom.bloomIntensity;
+            }
+            else
+            {
+                combinePass = Pass.BloomScatter;
+                finalPass = Pass.BloomScatterFinal;
+                buffer.SetGlobalFloat(bloomIntensityId, bloom.scatter);
+                finalIntensity = Mathf.Min(bloom.bloomIntensity, 0.95f);
+            }
             if (i > 1)
             {
                 buffer.ReleaseTemporaryRT(fromId - 1);
@@ -128,7 +145,7 @@ namespace MaltsHopDream
                 for (i -= 1; i > 0; i--)
                 {
                     buffer.SetGlobalTexture(fxSource2Id, toId + 1);
-                    Draw(fromId, toId, Pass.BloomCombine);
+                    Draw(fromId, toId, combinePass);
                     buffer.ReleaseTemporaryRT(fromId);
                     buffer.ReleaseTemporaryRT(toId + 1);
                     fromId = toId;
@@ -139,10 +156,9 @@ namespace MaltsHopDream
             {
                 buffer.ReleaseTemporaryRT(bloomPyramidId);
             }
-
-            buffer.SetGlobalFloat(bloomIntensityId, bloom.bloomIntensity);
+            buffer.SetGlobalFloat(bloomIntensityId, finalIntensity);
             buffer.SetGlobalTexture(fxSource2Id, sourceId);
-            Draw(fromId, BuiltinRenderTextureType.CameraTarget, Pass.BloomCombine);
+            Draw(fromId, BuiltinRenderTextureType.CameraTarget, finalPass);
             buffer.ReleaseTemporaryRT(fromId);
             buffer.EndSample("Bloom");
         }
