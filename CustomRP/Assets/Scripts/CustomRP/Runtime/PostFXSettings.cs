@@ -45,6 +45,8 @@ namespace MaltsHopDream
 
             [Min(0f)]
             public float bloomIntensity;
+
+            public bool fadeFireflies;
         }
         [SerializeField]
         private BloomSettings bloom = default;

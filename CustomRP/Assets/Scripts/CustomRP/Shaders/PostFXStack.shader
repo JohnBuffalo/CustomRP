@@ -50,6 +50,15 @@
             #pragma fragment BloomPrefilterPassFragment
             ENDHLSL
         }
+
+        Pass{
+            Name"Bloom Prefilter Fireflies"
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DefaultPassVertex
+            #pragma fragment BloomPrefilterFirefliesPassFragment
+            ENDHLSL
+        }
         
         Pass
         {

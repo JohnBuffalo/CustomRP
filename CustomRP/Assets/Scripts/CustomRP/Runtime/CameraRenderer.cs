@@ -21,10 +21,11 @@ namespace MaltsHopDream
         static ShaderTagId litShaderTagId = new ShaderTagId("CustomLit");
         private static int frameBufferId = Shader.PropertyToID("_CameraFrameBuffer");
 
+        bool useHDR;
         Lighting lighting = new();
         PostFXStack postFXStack = new();
 
-        public void Render(ScriptableRenderContext context, Camera camera, bool useDynamicBating, bool useGPUInstancing,
+        public void Render(ScriptableRenderContext context, Camera camera, bool allowHDR, bool useDynamicBating, bool useGPUInstancing,
             bool useLightPerObject,
             ShadowSettings shadowSettings, PostFXSettings postFXSettings)
         {
@@ -37,11 +38,11 @@ namespace MaltsHopDream
             {
                 return;
             }
-
+            useHDR = allowHDR && camera.allowHDR;
             buffer.BeginSample(SampleName);
             ExecuteBuffer();
             lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject);
-            postFXStack.Setup(context, camera, postFXSettings);
+            postFXStack.Setup(context, camera, postFXSettings,useHDR);
             buffer.EndSample(SampleName);
             Setup();
             DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject);
@@ -68,7 +69,7 @@ namespace MaltsHopDream
                     flags = CameraClearFlags.Color;
                 }
                 buffer.GetTemporaryRT(frameBufferId, camera.pixelWidth, camera.pixelHeight, 32, FilterMode.Bilinear,
-                    RenderTextureFormat.Default);
+                    useHDR?RenderTextureFormat.DefaultHDR:RenderTextureFormat.Default);
                 buffer.SetRenderTarget(frameBufferId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
             }
 

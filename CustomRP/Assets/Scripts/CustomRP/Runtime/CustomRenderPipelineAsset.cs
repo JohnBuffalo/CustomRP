@@ -8,6 +8,8 @@ namespace MaltsHopDream {
     public class CustomRenderPipelineAsset : RenderPipelineAsset
     {
         [SerializeField]
+        bool allowHDR = true;
+        [SerializeField]
         bool useDynamicBating = true, useGPUInstancing = true, useSRPBatcher = true, useLightPerObject = true;
         [SerializeField]
         ShadowSettings shadows = default;
@@ -15,7 +17,8 @@ namespace MaltsHopDream {
         PostFXSettings postFXSettings = default;
         protected override RenderPipeline CreatePipeline()
         {
-            return new CustomRenderPipeline(useDynamicBating, useGPUInstancing, 
+            return new CustomRenderPipeline(
+                allowHDR,useDynamicBating, useGPUInstancing, 
                 useSRPBatcher, useLightPerObject, 
                 shadows, postFXSettings);
         }

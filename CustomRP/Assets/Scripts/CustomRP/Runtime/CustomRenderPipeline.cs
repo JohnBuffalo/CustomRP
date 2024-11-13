@@ -7,11 +7,11 @@ using System;
 namespace MaltsHopDream {
     public partial class CustomRenderPipeline : RenderPipeline
     {
-        bool useDynamicBating, useGPUInstancing, useLightPerObject;
+        bool useDynamicBating, useGPUInstancing, useLightPerObject, allowHDR;
         private CameraRenderer renderer = new ();
         private ShadowSettings shadowSettings;
         private PostFXSettings postFXSettings;
-        public CustomRenderPipeline(bool useDynamicBating, bool useGPUInstancing, 
+        public CustomRenderPipeline(bool allowHDR, bool useDynamicBating, bool useGPUInstancing, 
             bool useSRPBatcher, bool useLightsPerObject, 
             ShadowSettings shadowSettings, PostFXSettings postFXSettings)
         {
@@ -20,6 +20,7 @@ namespace MaltsHopDream {
             this.shadowSettings = shadowSettings;
             this.useLightPerObject = useLightsPerObject;
             this.postFXSettings = postFXSettings;
+            this.allowHDR = allowHDR;
             GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;
             GraphicsSettings.lightsUseLinearIntensity = true;
             
@@ -31,7 +32,7 @@ namespace MaltsHopDream {
         protected override void Render(ScriptableRenderContext context, List<Camera> cameras)
         {
             for (int i = 0; i < cameras.Count; i++) {
-                renderer.Render(context, cameras[i], useDynamicBating, useGPUInstancing, useLightPerObject,shadowSettings,postFXSettings);
+                renderer.Render(context, cameras[i], allowHDR, useDynamicBating, useGPUInstancing, useLightPerObject,shadowSettings,postFXSettings);
             }
         }
     }

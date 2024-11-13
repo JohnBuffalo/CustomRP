@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecc8a505947a04c44bb57589a0209b64, type: 3}
   m_Name: CustomSRPBase
   m_EditorClassIdentifier: 
+  allowHDR: 1
   useDynamicBating: 0
   useGPUInstancing: 1
   useSRPBatcher: 1

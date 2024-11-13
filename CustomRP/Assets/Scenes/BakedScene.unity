@@ -1132,9 +1132,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.9150943, g: 0.35826805, b: 0.35826805, a: 1}
-  alphaCutoff: 0
-  metallic: 0.658
-  smoothness: 0.565
+  alphaCutoff: 0.585
+  metallic: 0.992
+  smoothness: 0.231
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!65 &411614563
 BoxCollider:
@@ -1918,7 +1918,7 @@ Transform:
   m_GameObject: {fileID: 838612336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.25, y: 2.93, z: -0.72}
+  m_LocalPosition: {x: 0.25, y: 3.23, z: -0.72}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2058,9 +2058,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 1, g: 0.24056602, b: 0.24056602, a: 1}
-  alphaCutoff: 0.417
-  metallic: 0
-  smoothness: 0.389
+  alphaCutoff: 0.769
+  metallic: 0.785
+  smoothness: 1
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!135 &870928191
 SphereCollider:
@@ -2440,9 +2440,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0, g: 0, b: 0, a: 1}
-  alphaCutoff: 0.5
-  metallic: 0.441
-  smoothness: 0.737
+  alphaCutoff: 0.259
+  metallic: 0.685
+  smoothness: 0.923
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!23 &1049542982
 MeshRenderer:
@@ -2666,7 +2666,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseColor: {r: 1, g: 1, b: 1, a: 1}
   alphaCutoff: 0.5
-  metallic: 0
+  metallic: 0.154
   smoothness: 0.5
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!135 &1094942409
@@ -4049,9 +4049,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 1, g: 1, b: 1, a: 1}
-  alphaCutoff: 0.5
-  metallic: 0
-  smoothness: 0.5
+  alphaCutoff: 0.515
+  metallic: 0.485
+  smoothness: 0.577
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!65 &1908153222
 BoxCollider:
