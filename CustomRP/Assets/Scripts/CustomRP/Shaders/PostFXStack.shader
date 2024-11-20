@@ -51,7 +51,8 @@
             ENDHLSL
         }
 
-        Pass{
+        Pass
+        {
             Name"Bloom Final Scatter"
             HLSLPROGRAM
             #pragma target 3.5
@@ -59,7 +60,7 @@
             #pragma fragment BloomScatterFinalPassFragment
             ENDHLSL
         }
-        
+
         Pass
         {
             Name "Bloom Prefilter"
@@ -70,7 +71,8 @@
             ENDHLSL
         }
 
-        Pass{
+        Pass
+        {
             Name"Bloom Prefilter Fireflies"
             HLSLPROGRAM
             #pragma target 3.5
@@ -79,39 +81,43 @@
             ENDHLSL
         }
 
-        Pass{
+        Pass
+        {
             Name"Tone Mapping None"
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex DefaultPassVertex
-            #pragma fragment ToneMappingNonePassFragment  
+            #pragma fragment ColorGradingNonePassFragment
             ENDHLSL
         }
 
-        Pass{
+        Pass
+        {
             Name"Tone Mapping ACES"
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex DefaultPassVertex
-            #pragma fragment ToneMappingACESPassFragment  
+            #pragma fragment ColorGradingACESPassFragment
             ENDHLSL
         }
 
-        Pass{
+        Pass
+        {
             Name"Tone Mapping Neutral"
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex DefaultPassVertex
-            #pragma fragment ToneMappingNeutralPassFragment 
+            #pragma fragment ColorGradingNeutralPassFragment
             ENDHLSL
         }
 
-        Pass{
+        Pass
+        {
             Name"Tone Mapping Reinhard"
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex DefaultPassVertex
-            #pragma fragment ToneMappingReinhardPassFragment 
+            #pragma fragment ColorGradingReinhardPassFragment
             ENDHLSL
         }
 
@@ -124,6 +130,16 @@
             #pragma target 3.5
             #pragma vertex DefaultPassVertex
             #pragma fragment CopyPassFragment
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Final"
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DefaultPassVertex
+            #pragma fragment FinalPassFragment
             ENDHLSL
         }
     }

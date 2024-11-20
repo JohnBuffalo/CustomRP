@@ -27,7 +27,7 @@ namespace MaltsHopDream
 
         public void Render(ScriptableRenderContext context, Camera camera, bool allowHDR, bool useDynamicBating, bool useGPUInstancing,
             bool useLightPerObject,
-            ShadowSettings shadowSettings, PostFXSettings postFXSettings)
+            ShadowSettings shadowSettings, PostFXSettings postFXSettings, int colorLUTResolution)
         {
             this.context = context;
             this.camera = camera;
@@ -42,7 +42,7 @@ namespace MaltsHopDream
             buffer.BeginSample(SampleName);
             ExecuteBuffer();
             lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject);
-            postFXStack.Setup(context, camera, postFXSettings,useHDR);
+            postFXStack.Setup(context, camera, postFXSettings,useHDR,colorLUTResolution);
             buffer.EndSample(SampleName);
             Setup();
             DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject);

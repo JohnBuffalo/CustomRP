@@ -16,11 +16,12 @@ namespace MaltsHopDream
             BloomScatterFinal,
             BloomPrefilter,
             BloomPrefilterFireflies,
-            ToneMappingNone,
-            ToneMappingACES,
-            ToneMappingNeutral,
-            ToneMappingReinhard,
-            Copy
+            ColorGradingNone,
+            ColorGradingACES,
+            ColorGradingNeutral,
+            ColorGradingReinhard,
+            Copy,
+            Final
         }
 
         private const string buffName = "Post FX";
@@ -44,6 +45,9 @@ namespace MaltsHopDream
             smhMidtonesId = Shader.PropertyToID("_SMHMidtones"),
             smhHighlightsId = Shader.PropertyToID("_SMHHighlights"),
             smhRangeId = Shader.PropertyToID("_SMHRange"),
+            colorGradingLUTId = Shader.PropertyToID("_ColorGradingLUT"),
+            colorGradingLUTParametersId = Shader.PropertyToID("_ColorGradingLUTParameters"),
+            colorGradingLUTInLogId = Shader.PropertyToID("_ColorGradingLUTInLogC"),
             fxSource2Id = Shader.PropertyToID("_PostFXSource2");
 
 
@@ -67,12 +71,16 @@ namespace MaltsHopDream
 
         #endregion
 
-        public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings settings, bool useHDR)
+        private int colorLUTResolution;
+
+        public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings settings, bool useHDR,
+            int colorLUTResolution)
         {
             this.context = context;
             this.camera = camera;
             this.settings = camera.cameraType <= CameraType.SceneView ? settings : null;
             this.useHDR = useHDR;
+            this.colorLUTResolution = colorLUTResolution;
             bloomPyramidId = Shader.PropertyToID("_BloomPyramid0");
             for (int i = 1; i < settings.Bloom.maxIterations * 2; i++)
             {
@@ -253,9 +261,25 @@ namespace MaltsHopDream
             ConfigureSplitToning();
             ConfigureChannelMixer();
             ConfigureShadowsMidtonesHighlights();
+
+            int lutHeight = colorLUTResolution;
+            int lutWidth = lutHeight * lutHeight;
+            buffer.GetTemporaryRT(colorGradingLUTId, lutWidth, lutHeight, 0, FilterMode.Bilinear,
+                RenderTextureFormat.DefaultHDR);
+            buffer.SetGlobalVector(colorGradingLUTParametersId, new Vector4(
+                lutHeight, 0.5f / lutWidth, 0.5f / lutHeight, lutHeight / (lutHeight - 1f)
+            ));
             ToneMappingSettings.Mode mode = settings.ToneMapping.mode;
-            Pass pass = mode < 0 ? Pass.Copy : Pass.ToneMappingNone + (int) mode;
-            Draw(sourceId, BuiltinRenderTextureType.CameraTarget, pass);
+            Pass pass = mode < 0 ? Pass.Copy : Pass.ColorGradingNone + (int) mode;
+            buffer.SetGlobalFloat(
+                colorGradingLUTInLogId, useHDR && pass != Pass.ColorGradingNone ? 1f : 0f
+            );
+            Draw(sourceId, colorGradingLUTId, pass);
+            buffer.SetGlobalVector(colorGradingLUTParametersId,
+                new Vector4(1f / lutWidth, 1f / lutHeight, lutHeight - 1f)
+            );
+            Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Final);
+            buffer.ReleaseTemporaryRT(colorGradingLUTId);
         }
     }
 }

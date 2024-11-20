@@ -15,12 +15,15 @@ namespace MaltsHopDream {
         ShadowSettings shadows = default;
         [SerializeField]
         PostFXSettings postFXSettings = default;
+        public enum ColorLUTResolution { _16 = 16, _32 = 32, _64 = 64 }
+        [SerializeField]
+        ColorLUTResolution colorLUTResolution = ColorLUTResolution._32;
         protected override RenderPipeline CreatePipeline()
         {
             return new CustomRenderPipeline(
                 allowHDR,useDynamicBating, useGPUInstancing, 
                 useSRPBatcher, useLightPerObject, 
-                shadows, postFXSettings);
+                shadows, postFXSettings, (int)colorLUTResolution);
         }
     }
 }
