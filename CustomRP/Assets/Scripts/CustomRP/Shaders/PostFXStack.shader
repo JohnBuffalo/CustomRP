@@ -80,6 +80,15 @@
         }
 
         Pass{
+            Name"Tone Mapping None"
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DefaultPassVertex
+            #pragma fragment ToneMappingNonePassFragment  
+            ENDHLSL
+        }
+
+        Pass{
             Name"Tone Mapping ACES"
             HLSLPROGRAM
             #pragma target 3.5

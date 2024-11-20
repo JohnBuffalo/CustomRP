@@ -26,6 +26,9 @@ namespace MaltsHopDream
             }
         }
 
+        /// <summary>
+        /// Bloom
+        /// </summary>
         [Serializable]
         public struct BloomSettings
         {
@@ -61,11 +64,13 @@ namespace MaltsHopDream
 
         public BloomSettings Bloom => bloom;
 
-
+        /// <summary>
+        /// ToneMapping
+        /// </summary>
         [Serializable]
         public struct ToneMappingSettings
         {
-            public enum Mode { None = -1, ACES, Neutral, Reinhard };
+            public enum Mode { None, ACES, Neutral, Reinhard };
             public Mode mode;
         }
 
@@ -73,5 +78,103 @@ namespace MaltsHopDream
         ToneMappingSettings toneMapping = default;
 
         public ToneMappingSettings ToneMapping => toneMapping;
+
+        /// <summary>
+        /// ColorAdjust
+        /// </summary>
+        [Serializable]
+        public struct ColorAdjustmentsSettings
+        {
+            public float postExposure;
+
+            [Range(-100f, 100f)]
+            public float contrast;
+
+            [ColorUsage(false, true)]
+            public Color colorFilter;
+
+            [Range(-180f, 180f)]
+            public float hueShift;
+
+            [Range(-100f, 100f)]
+            public float saturation;
+        }
+
+        [SerializeField]
+        ColorAdjustmentsSettings colorAdjustments = new ColorAdjustmentsSettings{
+            colorFilter = Color.white
+        };
+
+        public ColorAdjustmentsSettings ColorAdjustments => colorAdjustments;
+
+
+        [Serializable]
+        public struct WhiteBalanceSettings
+        {
+            [Range(-100f,100f)]
+            public float temperature, tint;
+        }
+
+        [SerializeField] WhiteBalanceSettings whiteBalance = default;
+
+        public WhiteBalanceSettings WhiteBalance => whiteBalance;
+        
+
+        [Serializable]
+        public struct SpliteToningSettings
+        {
+            [ColorUsage(false)]
+            public Color shadows, highlight;
+
+            [Range(-100f,100f)]
+            public float balance;
+        }
+
+        [SerializeField]
+        private SpliteToningSettings splitToning = new SpliteToningSettings()
+        {
+            shadows = Color.gray, highlight = Color.gray
+        };
+
+        public SpliteToningSettings SplitToning => splitToning;
+        
+        [Serializable]
+        public struct ChannelMixerSettings {
+
+            public Vector3 red, green, blue;
+        }
+	
+        [SerializeField]
+        ChannelMixerSettings channelMixer = new ChannelMixerSettings {
+            red = Vector3.right,
+            green = Vector3.up,
+            blue = Vector3.forward
+        };
+
+        public ChannelMixerSettings ChannelMixer => channelMixer;
+        
+        
+        [Serializable]
+        public struct ShadowsMidtonesHighlightsSettings
+        {   
+            [ColorUsage(false,true)]
+            public Color shadows, midtones, highlights;
+            [Range(0f, 2f)]
+            public float shadowsStart, shadowsEnd, highlightsStart, highLightsEnd;
+        }
+        
+        [SerializeField]
+        ShadowsMidtonesHighlightsSettings
+            shadowsMidtonesHighlights = new ShadowsMidtonesHighlightsSettings {
+                shadows = Color.white,
+                midtones = Color.white,
+                highlights = Color.white,
+                shadowsEnd = 0.3f,
+                highlightsStart = 0.55f,
+                highLightsEnd = 1f
+            };
+
+        public ShadowsMidtonesHighlightsSettings ShadowsMidtonesHighlights =>
+            shadowsMidtonesHighlights;
     }
 }
