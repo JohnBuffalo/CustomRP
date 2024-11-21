@@ -76,6 +76,10 @@ namespace MaltsHopDream
         public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings settings, bool useHDR,
             int colorLUTResolution)
         {
+            if (settings == null)
+            {
+                return;
+            }
             this.context = context;
             this.camera = camera;
             this.settings = camera.cameraType <= CameraType.SceneView ? settings : null;

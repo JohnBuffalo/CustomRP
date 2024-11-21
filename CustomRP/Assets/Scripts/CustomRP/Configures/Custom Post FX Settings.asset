@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   shader: {fileID: 4800000, guid: 027d59d17c464f25ba06871e9a557ba7, type: 3}
   bloom:
-    maxIterations: 1
+    maxIterations: 2
     downscaleLimit: 1
     bicubicUpsampling: 1
     threshold: 0.7
@@ -24,29 +24,29 @@ MonoBehaviour:
     mode: 1
     scatter: 0.05
   toneMapping:
-    mode: 1
+    mode: 0
   colorAdjustments:
-    postExposure: 1.02
-    contrast: 11
+    postExposure: 0.2
+    contrast: 0
     colorFilter: {r: 0.91237986, g: 0.94321686, b: 0.9528302, a: 1}
-    hueShift: 18
-    saturation: 66.8
+    hueShift: 2
+    saturation: 61
   whiteBalance:
-    temperature: 0
-    tint: 0
+    temperature: 11
+    tint: 2
   splitToning:
-    shadows: {r: 1, g: 1, b: 1, a: 1}
-    highlight: {r: 1, g: 0.9932159, b: 0.9575472, a: 1}
-    balance: 0
+    shadows: {r: 0.1, g: 0.2, b: 0.4, a: 1}
+    highlight: {r: 1, g: 1, b: 1, a: 1}
+    balance: 22
   channelMixer:
     red: {x: 1, y: 0, z: 0}
     green: {x: 0, y: 1, z: 0}
     blue: {x: 0, y: 0, z: 1}
   shadowsMidtonesHighlights:
-    shadows: {r: 1, g: 1, b: 1, a: 1}
+    shadows: {r: 0.2, g: 0.15, b: 0.1, a: 1}
     midtones: {r: 1, g: 1, b: 1, a: 1}
-    highlights: {r: 1, g: 1, b: 1, a: 1}
-    shadowsStart: 0
-    shadowsEnd: 0.66
-    highlightsStart: 0.91
-    highLightsEnd: 2
+    highlights: {r: 0.9, g: 0.8, b: 0.6, a: 1}
+    shadowsStart: 0.12
+    shadowsEnd: 0.24
+    highlightsStart: 0.87
+    highLightsEnd: 1.93
