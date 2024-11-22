@@ -25,7 +25,7 @@ namespace MaltsHopDream
         }
 
         private const string buffName = "Post FX";
-
+        static Rect fullViewRect = new Rect(0f, 0f, 1f, 1f);
         private int
             bloomBucibicUpsamplingId = Shader.PropertyToID("_BloomBicubicUpsampling"),
             bloomIntensityId = Shader.PropertyToID("_BloomIntensity"),
@@ -48,7 +48,9 @@ namespace MaltsHopDream
             colorGradingLUTId = Shader.PropertyToID("_ColorGradingLUT"),
             colorGradingLUTParametersId = Shader.PropertyToID("_ColorGradingLUTParameters"),
             colorGradingLUTInLogId = Shader.PropertyToID("_ColorGradingLUTInLogC"),
-            fxSource2Id = Shader.PropertyToID("_PostFXSource2");
+            fxSource2Id = Shader.PropertyToID("_PostFXSource2"),
+            finalSrcBlendId = Shader.PropertyToID("_FinalSrcBlend"),
+            finalDstBlendId = Shader.PropertyToID("_FinalDstBlend");
 
 
         private CommandBuffer buffer = new CommandBuffer()
@@ -73,8 +75,10 @@ namespace MaltsHopDream
 
         private int colorLUTResolution;
 
+        private CameraSettings.FinalBlendMode finalBlendMode;
+        
         public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings settings, bool useHDR,
-            int colorLUTResolution)
+            int colorLUTResolution, CameraSettings.FinalBlendMode finalBlendMode)
         {
             if (settings == null)
             {
@@ -85,6 +89,7 @@ namespace MaltsHopDream
             this.settings = camera.cameraType <= CameraType.SceneView ? settings : null;
             this.useHDR = useHDR;
             this.colorLUTResolution = colorLUTResolution;
+            this.finalBlendMode = finalBlendMode;
             bloomPyramidId = Shader.PropertyToID("_BloomPyramid0");
             for (int i = 1; i < settings.Bloom.maxIterations * 2; i++)
             {
@@ -117,6 +122,26 @@ namespace MaltsHopDream
 
             buffer.DrawProcedural(
                 Matrix4x4.identity, settings.Material, (int) pass, MeshTopology.Triangles, 3);
+        }
+        
+        void DrawFinal(RenderTargetIdentifier from)
+        {
+            buffer.SetGlobalFloat(finalSrcBlendId, (float) finalBlendMode.source );
+            buffer.SetGlobalFloat(finalDstBlendId, (float) finalBlendMode.destination );
+            
+            buffer.SetGlobalTexture(fxSourceId, from);
+
+            var loadAction = finalBlendMode.destination == BlendMode.Zero && camera.rect == fullViewRect
+                ? RenderBufferLoadAction.DontCare
+                : RenderBufferLoadAction.Load;
+            
+            buffer.SetRenderTarget(
+                BuiltinRenderTextureType.CameraTarget, 
+                loadAction, 
+                RenderBufferStoreAction.Store);
+            buffer.SetViewport(camera.pixelRect);
+            buffer.DrawProcedural(
+                Matrix4x4.identity, settings.Material, (int)Pass.Final, MeshTopology.Triangles, 3);
         }
 
         bool DoBloom(int sourceId)
@@ -282,7 +307,7 @@ namespace MaltsHopDream
             buffer.SetGlobalVector(colorGradingLUTParametersId,
                 new Vector4(1f / lutWidth, 1f / lutHeight, lutHeight - 1f)
             );
-            Draw(sourceId, BuiltinRenderTextureType.CameraTarget, Pass.Final);
+            DrawFinal(sourceId);
             buffer.ReleaseTemporaryRT(colorGradingLUTId);
         }
     }

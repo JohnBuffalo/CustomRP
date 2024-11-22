@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace MaltsHopDream {
     [CreateAssetMenu(menuName = "Rendering/MaltsHopDream Render Pipeline")]
-    public class CustomRenderPipelineAsset : RenderPipelineAsset
+    public partial class CustomRenderPipelineAsset : RenderPipelineAsset
     {
         [SerializeField]
         bool allowHDR = true;

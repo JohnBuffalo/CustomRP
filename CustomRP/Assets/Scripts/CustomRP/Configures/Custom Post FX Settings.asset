@@ -46,7 +46,7 @@ MonoBehaviour:
     shadows: {r: 0.2, g: 0.15, b: 0.1, a: 1}
     midtones: {r: 1, g: 1, b: 1, a: 1}
     highlights: {r: 0.9, g: 0.8, b: 0.6, a: 1}
-    shadowsStart: 0.12
+    shadowsStart: 0.08
     shadowsEnd: 0.24
     highlightsStart: 0.87
     highLightsEnd: 1.93

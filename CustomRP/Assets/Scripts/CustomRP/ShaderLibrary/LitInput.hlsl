@@ -17,6 +17,7 @@ UNITY_DEFINE_INSTANCED_PROP(float4, _DetailMap_ST)
 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
 UNITY_DEFINE_INSTANCED_PROP(float4, _EmissionColor)
 UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff)
+UNITY_DEFINE_INSTANCED_PROP(float, _ZWrite)
 UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
 UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
 UNITY_DEFINE_INSTANCED_PROP(float, _Fresnel)
@@ -27,6 +28,9 @@ UNITY_DEFINE_INSTANCED_PROP(float, _DetailNormalScale)
 UNITY_DEFINE_INSTANCED_PROP(float, _NormalScale)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
+float GetFinalAlpha (float alpha) {
+    return INPUT_PROP(_ZWrite) ? 1.0 : alpha;
+}
 
 float3 GetEmission(InputConfig c)
 {

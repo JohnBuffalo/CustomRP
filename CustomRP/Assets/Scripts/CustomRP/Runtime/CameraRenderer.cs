@@ -10,7 +10,8 @@ namespace MaltsHopDream
         private ScriptableRenderContext context;
         private Camera camera;
         private const string bufferName = "Render Camera";
-
+        private static CameraSettings defaultCameraSettings = new CameraSettings();
+        
         private CommandBuffer buffer = new CommandBuffer
         {
             name = bufferName
@@ -31,6 +32,15 @@ namespace MaltsHopDream
         {
             this.context = context;
             this.camera = camera;
+
+            var crpCamera = camera.GetComponent<CustomRenderPipelineCamera>();
+            CameraSettings cameraSettings = crpCamera ? crpCamera.Settings : defaultCameraSettings;
+
+            if (cameraSettings.overridePostFX)
+            {
+                postFXSettings = cameraSettings.postFXSettings;
+            }
+            
             PrepareForSceneWindow();
             PrepareBuffer();
 
@@ -41,11 +51,11 @@ namespace MaltsHopDream
             useHDR = allowHDR && camera.allowHDR;
             buffer.BeginSample(SampleName);
             ExecuteBuffer();
-            lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject);
-            postFXStack.Setup(context, camera, postFXSettings,useHDR,colorLUTResolution);
+            lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject, cameraSettings.maskLights ? cameraSettings.renderingLayerMask : -1);
+            postFXStack.Setup(context, camera, postFXSettings,useHDR,colorLUTResolution, cameraSettings.finalBlendMode);
             buffer.EndSample(SampleName);
             Setup();
-            DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject);
+            DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject, cameraSettings.renderingLayerMask);
             DrawUnsupportedShaders();
             DrawGizmosBeforeFX();
             if (postFXStack.IsActive)
@@ -80,7 +90,7 @@ namespace MaltsHopDream
             ExecuteBuffer();
         }
 
-        private void DrawVisibleGeometry(bool useDynamicBating, bool useGPUInstancing, bool useLightsPerObject)
+        private void DrawVisibleGeometry(bool useDynamicBating, bool useGPUInstancing, bool useLightsPerObject, int renderingLayerMask)
         {
             PerObjectData lightsPerObjectFlags = useLightsPerObject
                 ? PerObjectData.LightData | PerObjectData.LightIndices
@@ -104,7 +114,7 @@ namespace MaltsHopDream
             };
             drawingSettings.SetShaderPassName(1, litShaderTagId);
             // 创建过滤设置，包含所有渲染队列
-            var filteringSettings = new FilteringSettings(RenderQueueRange.all);
+            var filteringSettings = new FilteringSettings(RenderQueueRange.opaque, renderingLayerMask : (uint)renderingLayerMask);
 
             // 使用上述设置绘制可见的几何体
             context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
