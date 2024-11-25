@@ -25,8 +25,14 @@ float2 TransformBaseUV(float2 baseUV)
 float4 GetBase(InputConfig c)
 {
     float4 map = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, c.baseUV);
+    if (c.flipbookBlending) {
+        map = lerp(
+            map, SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, c.flipbookUVB.xy),
+            c.flipbookUVB.z
+        );
+    }
     float4 color = INPUT_PROP(_BaseColor);
-    return map * color;
+    return map * color * c.color;
 }
 
 float3 GetEmission(InputConfig c)

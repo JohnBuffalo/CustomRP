@@ -6,8 +6,6 @@ TEXTURE2D(_PostFXSource);
 TEXTURE2D(_PostFXSource2);
 TEXTURE2D(_ColorGradingLUT);
 
-SAMPLER(sampler_linear_clamp);
-
 float4 _PostFXSource_TexelSize;
 bool _BloomBicubicUpsampling;
 float4 _BloomThreshold;
@@ -21,7 +19,7 @@ float4 _ColorGradingLUTParameters;
 bool _ColorGradingLUTInLogC;
 
 struct Varyings {
-    float4 positionCS : SV_POSITION;
+    float4 positionCS_SS : SV_POSITION;
     float2 screenUV : VAR_SCREEN_UV;
 };
 
@@ -31,7 +29,7 @@ float4 GetSourceTexelSize () {
 
 Varyings DefaultPassVertex (uint vertexID : SV_VertexID) {
     Varyings output;
-    output.positionCS = float4(
+    output.positionCS_SS = float4(
         vertexID <= 1 ? -1.0 : 3.0,
         vertexID == 1 ? 3.0 : -1.0,
         0.0, 1.0

@@ -20,21 +20,46 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
 
+SAMPLER(sampler_linear_clamp);
+SAMPLER(sampler_point_clamp);
+
+bool IsOrthographicCamera ()
+{
+    return unity_OrthoParams.w;
+}
+
+float OrthographicDepthBufferToLinear (float rawDepth) {
+    #if UNITY_REVERSED_Z
+    rawDepth = 1.0 - rawDepth;
+    #endif
+    return (_ProjectionParams.z - _ProjectionParams.y) * rawDepth + _ProjectionParams.y;
+}
+
+#include "Fragment.hlsl"
+
 struct InputConfig
 {
+    Fragment fragment;
+    float4 color;
     float2 baseUV;
     float2 detailUV;
     bool useMask;
     bool useDetail;
+    float3 flipbookUVB;
+    bool flipbookBlending;
 };
 
-InputConfig GetInputConfig(float2 baseUV, float2 detailUV = 0.0)
+InputConfig GetInputConfig(float4 positionSS, float2 baseUV, float2 detailUV = 0.0)
 {
     InputConfig c;
+    c.fragment = GetFragment(positionSS);
+    c.color = 1.0;
     c.baseUV = baseUV;
     c.detailUV = detailUV;
     c.useMask = false;
     c.useDetail = false;
+    c.flipbookUVB = 0.0;
+    c.flipbookBlending = false;
     return c;
 }
 
@@ -48,10 +73,10 @@ float DistanceSquared(float3 a, float3 b)
     return dot(a - b, a - b);
 }
 
-void ClipLOD(float2 positionCS, float fade)
+void ClipLOD (Fragment fragment, float fade)
 {
     #if defined(LOD_FADE_CROSSFADE)
-        float dither = InterleavedGradientNoise(positionCS.xy,0); //(positionCS.y % 32)/32;
+        float dither = InterleavedGradientNoise(fragment.positionSS,0); //(positionCS.y % 32)/32;
         clip(fade + (fade < 0.0 ? dither :  -dither));
     #endif
 }
