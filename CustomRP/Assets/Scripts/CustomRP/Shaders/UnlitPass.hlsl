@@ -2,7 +2,8 @@
 #define CUSTOM_UNLIT_PASS_INCLUDED
 
 
-struct Attributes {
+struct Attributes
+{
     //positionOS is the position of the vertex in object space
     float3 positionOS : POSITION;
     float4 color : COLOR;
@@ -10,12 +11,13 @@ struct Attributes {
         float4 baseUV : TEXCOORD0;
         float flipbookBlend : TEXCOORD1;
     #else
-        float2 baseUV : TEXCOORD0;
+    float2 baseUV : TEXCOORD0;
     #endif
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
-struct Varyings{
+struct Varyings
+{
     float4 positionCS_SS : SV_POSITION;
     #if defined(_VERTEX_COLORS)
         float4 color : VAR_COLOR;
@@ -27,7 +29,8 @@ struct Varyings{
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
-Varyings UnlitPassVertex(Attributes input) {
+Varyings UnlitPassVertex(Attributes input)
+{
     Varyings output;
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
@@ -43,8 +46,10 @@ Varyings UnlitPassVertex(Attributes input) {
     #endif
     return output;
 }
-float4 UnlitPassFragment(Varyings input):SV_TARGET {
-	UNITY_SETUP_INSTANCE_ID(input);
+
+float4 UnlitPassFragment(Varyings input):SV_TARGET
+{
+    UNITY_SETUP_INSTANCE_ID(input);
     InputConfig config = GetInputConfig(input.positionCS_SS, input.baseUV);
 
     #if defined(_VERTEX_COLORS)
@@ -54,11 +59,13 @@ float4 UnlitPassFragment(Varyings input):SV_TARGET {
         config.flipbookUVB = input.flipbookUVB;
         config.flipbookBlending = true;
     #endif
+    #if defined(_NEAR_FADE)
+        config.nearFade = true;
+    #endif
     float4 base = GetBase(config);
     #if defined(_CLIPPING)
-        clip(base.a - GetCutoff(config));
+    clip(base.a - GetCutoff(config));
     #endif
     return float4(base.rgb, GetFinalAlpha(base.a));
 }
 #endif
-

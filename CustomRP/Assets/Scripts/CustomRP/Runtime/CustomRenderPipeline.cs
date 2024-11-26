@@ -8,13 +8,13 @@ namespace MaltsHopDream {
     public partial class CustomRenderPipeline : RenderPipeline
     {
         bool useDynamicBating, useGPUInstancing, useLightPerObject, allowHDR;
-        private CameraRenderer renderer = new ();
+        private CameraRenderer renderer;
         private ShadowSettings shadowSettings;
         private PostFXSettings postFXSettings;
         private int colorLUTResolution;
         public CustomRenderPipeline(bool allowHDR, bool useDynamicBating, bool useGPUInstancing, 
             bool useSRPBatcher, bool useLightsPerObject, 
-            ShadowSettings shadowSettings, PostFXSettings postFXSettings, int colorLUTResolution)
+            ShadowSettings shadowSettings, PostFXSettings postFXSettings, int colorLUTResolution, Shader cameraRendererShader)
         {
             this.useDynamicBating = useDynamicBating;
             this.useGPUInstancing = useGPUInstancing;
@@ -25,7 +25,7 @@ namespace MaltsHopDream {
             this.colorLUTResolution = colorLUTResolution;
             GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;
             GraphicsSettings.lightsUseLinearIntensity = true;
-            
+            renderer = new CameraRenderer(cameraRendererShader);
             InitializeForEditor();
         }
 
@@ -36,6 +36,12 @@ namespace MaltsHopDream {
             for (int i = 0; i < cameras.Count; i++) {
                 renderer.Render(context, cameras[i], allowHDR, useDynamicBating, useGPUInstancing, useLightPerObject,shadowSettings,postFXSettings,colorLUTResolution);
             }
+        }
+        
+        protected override void Dispose (bool disposing) {
+            base.Dispose(disposing);
+            DisposeForEditor();
+            renderer.Dispose();
         }
     }
 }

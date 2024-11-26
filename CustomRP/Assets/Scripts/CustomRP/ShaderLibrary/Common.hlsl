@@ -47,6 +47,7 @@ struct InputConfig
     bool useDetail;
     float3 flipbookUVB;
     bool flipbookBlending;
+    bool nearFade;
 };
 
 InputConfig GetInputConfig(float4 positionSS, float2 baseUV, float2 detailUV = 0.0)
@@ -60,6 +61,7 @@ InputConfig GetInputConfig(float4 positionSS, float2 baseUV, float2 detailUV = 0
     c.useDetail = false;
     c.flipbookUVB = 0.0;
     c.flipbookBlending = false;
+    c.nearFade = false;
     return c;
 }
 

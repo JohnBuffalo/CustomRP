@@ -8,7 +8,8 @@ namespace MaltsHopDream
     public partial class CustomRenderPipeline
     {
         partial void InitializeForEditor();
-
+        private partial void DisposeForEditor ();
+        
 #if UNITY_EDITOR
         
         static Lightmapping.RequestLightsDelegate lightsDelegate =
@@ -58,11 +59,12 @@ namespace MaltsHopDream
         partial void InitializeForEditor () {
             Lightmapping.SetDelegate(lightsDelegate);
         }
-
-        protected override void Dispose (bool disposing) {
-            base.Dispose(disposing);
+        
+        private partial void DisposeForEditor()
+        {
             Lightmapping.ResetDelegate();
         }
 #endif
+ 
     }
 }
