@@ -51,10 +51,12 @@ float4 UnlitPassFragment(Varyings input):SV_TARGET
 {
     UNITY_SETUP_INSTANCE_ID(input);
     InputConfig config = GetInputConfig(input.positionCS_SS, input.baseUV);
-
+    // return GetBufferColor(config.fragment, 0.05);
+    // return float4(config.fragment.bufferDepth.xxx / 20.0, 1.0);
     #if defined(_VERTEX_COLORS)
         config.color = input.color;
     #endif
+
     #if defined(_FLIPBOOK_BLENDING)
         config.flipbookUVB = input.flipbookUVB;
         config.flipbookBlending = true;
@@ -62,9 +64,16 @@ float4 UnlitPassFragment(Varyings input):SV_TARGET
     #if defined(_NEAR_FADE)
         config.nearFade = true;
     #endif
+    #if defined(_SOFT_PARTICLES)
+        config.softParticles = true;
+    #endif
     float4 base = GetBase(config);
     #if defined(_CLIPPING)
-    clip(base.a - GetCutoff(config));
+        clip(base.a - GetCutoff(config));
+    #endif
+    #if defined(_DISTORTION)
+        float2 distortion = GetDistortion(config);
+        base = GetBufferColor(config.fragment, distortion);
     #endif
     return float4(base.rgb, GetFinalAlpha(base.a));
 }

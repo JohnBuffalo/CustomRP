@@ -8,7 +8,10 @@ namespace MaltsHopDream
     [CreateAssetMenu(menuName = "Rendering/MaltsHopDream Render Pipeline")]
     public partial class CustomRenderPipelineAsset : RenderPipelineAsset
     {
-        [SerializeField] bool allowHDR = true;
+        [SerializeField] private CameraBufferSettings cameraBuffer = new CameraBufferSettings()
+        {
+            allowHDR = true
+        };
         [SerializeField] bool useDynamicBating = true,
             useGPUInstancing = true,
             useSRPBatcher = true,
@@ -28,7 +31,7 @@ namespace MaltsHopDream
         protected override RenderPipeline CreatePipeline()
         {
             return new CustomRenderPipeline(
-                allowHDR, useDynamicBating, useGPUInstancing,
+                cameraBuffer, useDynamicBating, useGPUInstancing,
                 useSRPBatcher, useLightPerObject,
                 shadows, postFXSettings, (int) colorLUTResolution, cameraRendererShader);
         }

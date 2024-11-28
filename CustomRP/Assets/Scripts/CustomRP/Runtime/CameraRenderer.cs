@@ -12,6 +12,7 @@ namespace MaltsHopDream
         private Material material;
         private const string bufferName = "Render Camera";
         private static CameraSettings defaultCameraSettings = new CameraSettings();
+        static bool copyTextureSupported = SystemInfo.copyTextureSupport > CopyTextureSupport.None;
 
         private CommandBuffer buffer = new CommandBuffer
         {
@@ -25,20 +26,30 @@ namespace MaltsHopDream
         private static int
             colorAttachmentId = Shader.PropertyToID("_CameraColorAttachment"),
             depthAttachmentId = Shader.PropertyToID("_CameraDepthAttachment"),
+            colorTextureId = Shader.PropertyToID("_CameraColorTexture"),
             depthTextureId = Shader.PropertyToID("_CameraDepthTexture"),
             sourceTextureId = Shader.PropertyToID("_SourceTexture");
 
         bool useHDR;
-        private bool useDepthTexture, useIntermediateBuffer;
+        private bool useColorTexture, useDepthTexture, useIntermediateBuffer;
         Lighting lighting = new();
         PostFXStack postFXStack = new();
+        Texture2D missingTexture;
 
         public CameraRenderer(Shader shader)
         {
             material = CoreUtils.CreateEngineMaterial(shader);
+            missingTexture = new Texture2D(1, 1)
+            {
+                hideFlags = HideFlags.HideAndDontSave,
+                name = "Missing"
+            };
+            missingTexture.SetPixel(0, 0, Color.white * 0.5f);
+            missingTexture.Apply(true, true);
         }
 
-        public void Render(ScriptableRenderContext context, Camera camera, bool allowHDR, bool useDynamicBating,
+        public void Render(ScriptableRenderContext context, Camera camera,
+            CameraBufferSettings bufferSettings, bool useDynamicBating,
             bool useGPUInstancing,
             bool useLightPerObject,
             ShadowSettings shadowSettings, PostFXSettings postFXSettings, int colorLUTResolution)
@@ -49,7 +60,16 @@ namespace MaltsHopDream
             var crpCamera = camera.GetComponent<CustomRenderPipelineCamera>();
             CameraSettings cameraSettings = crpCamera ? crpCamera.Settings : defaultCameraSettings;
 
-            useDepthTexture = true;
+            if (camera.cameraType == CameraType.Reflection)
+            {
+                useColorTexture = bufferSettings.copyColorReflection;
+                useDepthTexture = bufferSettings.copyDepthReflection;
+            }
+            else
+            {
+                useColorTexture = bufferSettings.copyColor && cameraSettings.copyColor;
+                useDepthTexture = bufferSettings.copyDepth && cameraSettings.copyDepth;
+            }
 
             if (cameraSettings.overridePostFX)
             {
@@ -64,7 +84,7 @@ namespace MaltsHopDream
                 return;
             }
 
-            useHDR = allowHDR && camera.allowHDR;
+            useHDR = bufferSettings.allowHDR && camera.allowHDR;
             buffer.BeginSample(SampleName);
             ExecuteBuffer();
             lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject,
@@ -97,7 +117,7 @@ namespace MaltsHopDream
             context.SetupCameraProperties(camera);
             CameraClearFlags flags = camera.clearFlags;
 
-            useIntermediateBuffer = useDepthTexture || postFXStack.IsActive;
+            useIntermediateBuffer = useColorTexture || useDepthTexture || postFXStack.IsActive;
             if (useIntermediateBuffer)
             {
                 if (flags > CameraClearFlags.Color)
@@ -123,6 +143,8 @@ namespace MaltsHopDream
                 flags <= CameraClearFlags.Color,
                 flags == CameraClearFlags.Color ? camera.backgroundColor.linear : Color.clear);
             buffer.BeginSample(SampleName);
+            buffer.SetGlobalTexture(colorTextureId, missingTexture);
+            buffer.SetGlobalTexture(depthTextureId, missingTexture);
             ExecuteBuffer();
         }
 
@@ -159,7 +181,10 @@ namespace MaltsHopDream
 
             // 绘制天空盒
             context.DrawSkybox(camera);
-            CopyAttachments();
+            if (useColorTexture || useDepthTexture)
+            {
+                CopyAttachments();
+            }
 
             // 创建排序设置，设置为常见的透明物体排序标准
             sortingSettings.criteria = SortingCriteria.CommonTransparent;
@@ -190,6 +215,10 @@ namespace MaltsHopDream
             {
                 buffer.ReleaseTemporaryRT(depthAttachmentId);
                 buffer.ReleaseTemporaryRT(colorAttachmentId);
+                if (useColorTexture)
+                {
+                    buffer.ReleaseTemporaryRT(colorTextureId);
+                }
 
                 if (useDepthTexture)
                 {
@@ -212,31 +241,59 @@ namespace MaltsHopDream
 
         void CopyAttachments()
         {
+            if (useColorTexture) {
+                buffer.GetTemporaryRT(
+                    colorTextureId, camera.pixelWidth, camera.pixelHeight,
+                    0, FilterMode.Bilinear, useHDR ?
+                        RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default
+                );
+                if (copyTextureSupported) {
+                    buffer.CopyTexture(colorAttachmentId, colorTextureId);
+                }
+                else {
+                    Draw(colorAttachmentId, colorTextureId);
+                }
+            }
             if (useDepthTexture)
             {
                 buffer.GetTemporaryRT(
                     depthTextureId, camera.pixelWidth, camera.pixelHeight,
                     32, FilterMode.Point, RenderTextureFormat.Depth
                 );
-                buffer.CopyTexture(depthAttachmentId, depthTextureId);
+                if (copyTextureSupported)
+                {
+                    buffer.CopyTexture(depthAttachmentId, depthTextureId);
+                }
+                else
+                {
+                    Draw(depthAttachmentId, depthTextureId, true);
+                    buffer.SetRenderTarget(
+                        colorAttachmentId,
+                        RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
+                        depthAttachmentId,
+                        RenderBufferLoadAction.Load, RenderBufferStoreAction.Store
+                    );
+                }
+
                 ExecuteBuffer();
             }
         }
 
-        void Draw(RenderTargetIdentifier from, RenderTargetIdentifier to)
+        void Draw(RenderTargetIdentifier from, RenderTargetIdentifier to, bool isDepth = false)
         {
             buffer.SetGlobalTexture(sourceTextureId, from);
             buffer.SetRenderTarget(
                 to, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store
             );
             buffer.DrawProcedural(
-                Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3
+                Matrix4x4.identity, material, isDepth ? 1 : 0, MeshTopology.Triangles, 3
             );
         }
 
         public void Dispose()
         {
             CoreUtils.Destroy(material);
+            CoreUtils.Destroy(missingTexture);
         }
     }
 }
