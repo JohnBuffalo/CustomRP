@@ -8,9 +8,10 @@ namespace MaltsHopDream
     [CreateAssetMenu(menuName = "Rendering/MaltsHopDream Render Pipeline")]
     public partial class CustomRenderPipelineAsset : RenderPipelineAsset
     {
-        [SerializeField] private CameraBufferSettings cameraBuffer = new CameraBufferSettings()
+        [SerializeField] private CameraBufferSettings cameraBuffer = new()
         {
-            allowHDR = true
+            allowHDR = true,
+            renderScale = 1f
         };
         [SerializeField] bool useDynamicBating = true,
             useGPUInstancing = true,

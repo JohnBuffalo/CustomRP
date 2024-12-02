@@ -17,6 +17,7 @@ float4 _ChannelMixerRed,_ChannelMixerGreen,_ChannelMixerBlue;
 float4 _SMHShadows,_SMHMidtones,_SMHHighlights,_SMHRange;
 float4 _ColorGradingLUTParameters;
 bool _ColorGradingLUTInLogC;
+bool _CopyBicubic;
 
 struct Varyings {
     float4 positionCS_SS : SV_POSITION;
@@ -307,6 +308,15 @@ float4 FinalPassFragment (Varyings input) : SV_TARGET {
     float4 color = GetSource(input.screenUV);
     color.rgb = ApplyColorGradingLUT(color.rgb);
     return color;
+}
+
+float4 FinalPassFragmentRescale (Varyings input) : SV_TARGET {
+    if (_CopyBicubic) {
+        return GetSourceBicubic(input.screenUV);
+    }
+    else {
+        return GetSource(input.screenUV);
+    }
 }
 
 #endif

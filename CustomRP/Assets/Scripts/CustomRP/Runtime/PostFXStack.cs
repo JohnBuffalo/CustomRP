@@ -2,6 +2,7 @@
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using static MaltsHopDream.PostFXSettings;
+using static MaltsHopDream.CameraBufferSettings;
 
 namespace MaltsHopDream
 {
@@ -21,12 +22,17 @@ namespace MaltsHopDream
             ColorGradingNeutral,
             ColorGradingReinhard,
             Copy,
-            Final
+            Final,
+            FinalRescale
         }
 
+        private Vector2Int bufferSize;
         private const string buffName = "Post FX";
         static Rect fullViewRect = new Rect(0f, 0f, 1f, 1f);
+
         private int
+            copyBicubicId = Shader.PropertyToID("_CopyBicubic"),
+            finalResultId = Shader.PropertyToID("_FinalResult"),
             bloomBucibicUpsamplingId = Shader.PropertyToID("_BloomBicubicUpsampling"),
             bloomIntensityId = Shader.PropertyToID("_BloomIntensity"),
             colorAdjustmentsId = Shader.PropertyToID("_ColorAdjustments"),
@@ -76,20 +82,26 @@ namespace MaltsHopDream
         private int colorLUTResolution;
 
         private CameraSettings.FinalBlendMode finalBlendMode;
+
+        private BicubicRescalingMode bicubicRescaling;
         
-        public void Setup(ScriptableRenderContext context, Camera camera, PostFXSettings settings, bool useHDR,
-            int colorLUTResolution, CameraSettings.FinalBlendMode finalBlendMode)
+        public void Setup(ScriptableRenderContext context, Camera camera, Vector2Int bufferSize,
+            PostFXSettings settings, bool useHDR,
+            int colorLUTResolution, CameraSettings.FinalBlendMode finalBlendMode, BicubicRescalingMode bicubicRescaling)
         {
             if (settings == null)
             {
                 return;
             }
+
+            this.bicubicRescaling = bicubicRescaling;
             this.context = context;
             this.camera = camera;
             this.settings = camera.cameraType <= CameraType.SceneView ? settings : null;
             this.useHDR = useHDR;
             this.colorLUTResolution = colorLUTResolution;
             this.finalBlendMode = finalBlendMode;
+            this.bufferSize = bufferSize;
             bloomPyramidId = Shader.PropertyToID("_BloomPyramid0");
             for (int i = 1; i < settings.Bloom.maxIterations * 2; i++)
             {
@@ -123,31 +135,42 @@ namespace MaltsHopDream
             buffer.DrawProcedural(
                 Matrix4x4.identity, settings.Material, (int) pass, MeshTopology.Triangles, 3);
         }
-        
-        void DrawFinal(RenderTargetIdentifier from)
+
+        void DrawFinal(RenderTargetIdentifier from, Pass pass)
         {
-            buffer.SetGlobalFloat(finalSrcBlendId, (float) finalBlendMode.source );
-            buffer.SetGlobalFloat(finalDstBlendId, (float) finalBlendMode.destination );
-            
+            buffer.SetGlobalFloat(finalSrcBlendId, (float) finalBlendMode.source);
+            buffer.SetGlobalFloat(finalDstBlendId, (float) finalBlendMode.destination);
+
             buffer.SetGlobalTexture(fxSourceId, from);
 
             var loadAction = finalBlendMode.destination == BlendMode.Zero && camera.rect == fullViewRect
                 ? RenderBufferLoadAction.DontCare
                 : RenderBufferLoadAction.Load;
-            
+
             buffer.SetRenderTarget(
-                BuiltinRenderTextureType.CameraTarget, 
-                loadAction, 
+                BuiltinRenderTextureType.CameraTarget,
+                loadAction,
                 RenderBufferStoreAction.Store);
             buffer.SetViewport(camera.pixelRect);
             buffer.DrawProcedural(
-                Matrix4x4.identity, settings.Material, (int)Pass.Final, MeshTopology.Triangles, 3);
+                Matrix4x4.identity, settings.Material, (int) pass, MeshTopology.Triangles, 3);
         }
 
         bool DoBloom(int sourceId)
         {
             BloomSettings bloom = settings.Bloom;
-            int width = camera.pixelWidth / 2, height = camera.pixelHeight / 2;
+            int width, height;
+            if (bloom.ignoreRenderScale)
+            {
+                width = camera.pixelWidth / 2;
+                height = camera.pixelHeight / 2;
+            }
+            else
+            {
+                width = bufferSize.x / 2;
+                height = bufferSize.y / 2;
+            }
+
             if (bloom.maxIterations == 0 || bloom.bloomIntensity <= 0 || height < bloom.downscaleLimit * 2 ||
                 width < bloom.downscaleLimit * 2)
             {
@@ -229,7 +252,7 @@ namespace MaltsHopDream
 
             buffer.SetGlobalFloat(bloomIntensityId, finalIntensity);
             buffer.SetGlobalTexture(fxSource2Id, sourceId);
-            buffer.GetTemporaryRT(bloomResultId, camera.pixelWidth, camera.pixelHeight, 0, FilterMode.Bilinear, format);
+            buffer.GetTemporaryRT(bloomResultId, bufferSize.x, bufferSize.y, 0, FilterMode.Bilinear, format);
             Draw(fromId, bloomResultId, finalPass);
             buffer.ReleaseTemporaryRT(fromId);
             buffer.EndSample("Bloom");
@@ -307,7 +330,29 @@ namespace MaltsHopDream
             buffer.SetGlobalVector(colorGradingLUTParametersId,
                 new Vector4(1f / lutWidth, 1f / lutHeight, lutHeight - 1f)
             );
-            DrawFinal(sourceId);
+            if (bufferSize.x == camera.pixelWidth)
+            {
+                DrawFinal(sourceId, Pass.Final);
+            }
+            else
+            {
+                buffer.SetGlobalFloat(finalSrcBlendId, 1f);
+                buffer.SetGlobalFloat(finalDstBlendId, 0f);
+                buffer.GetTemporaryRT(
+                    finalResultId, bufferSize.x, bufferSize.y, 0,
+                    FilterMode.Bilinear, RenderTextureFormat.Default
+                );
+                Draw(sourceId, finalResultId, Pass.Final);
+                bool bicubicSampling =
+                    bicubicRescaling == BicubicRescalingMode.UpAndDown ||
+                    bicubicRescaling == BicubicRescalingMode.UpAndDown ||
+                    bicubicRescaling == BicubicRescalingMode.UpOnly &&
+                    bufferSize.x < camera.pixelWidth;
+                buffer.SetGlobalFloat(copyBicubicId, bicubicSampling ? 1f : 0f);
+                DrawFinal(finalResultId, Pass.FinalRescale);
+                buffer.ReleaseTemporaryRT(finalResultId);
+            }
+
             buffer.ReleaseTemporaryRT(colorGradingLUTId);
         }
     }

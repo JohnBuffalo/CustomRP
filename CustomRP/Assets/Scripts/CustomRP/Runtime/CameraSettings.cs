@@ -19,12 +19,29 @@ namespace MaltsHopDream
             destination = BlendMode.Zero
         };
 
-        [RenderingLayerMaskField]
-        public int renderingLayerMask = -1;
+        public enum RenderScaleMode
+        {
+            Inherit,
+            Multiply,
+            Override
+        }
+
+        [RenderingLayerMaskField] public int renderingLayerMask = -1;
         public bool maskLights = false;
         public bool overridePostFX = false;
         public PostFXSettings postFXSettings = default;
         public bool copyDepth = true;
         public bool copyColor = true;
+
+        public RenderScaleMode renderScaleMode = RenderScaleMode.Inherit;
+
+        [Range(0.1f, 2f)] public float renderScale = 1f;
+        public float GetRenderScale(float scale)
+        {
+            return 
+                renderScaleMode == RenderScaleMode.Inherit ? scale :
+                renderScaleMode == RenderScaleMode.Override ? renderScale :
+                scale * renderScale;
+        }
     }
 }

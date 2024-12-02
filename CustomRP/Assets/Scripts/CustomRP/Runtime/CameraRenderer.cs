@@ -13,6 +13,7 @@ namespace MaltsHopDream
         private const string bufferName = "Render Camera";
         private static CameraSettings defaultCameraSettings = new CameraSettings();
         static bool copyTextureSupported = SystemInfo.copyTextureSupport > CopyTextureSupport.None;
+        public const float renderScaleMin = 0.1f, renderScaleMax = 2f;
 
         private CommandBuffer buffer = new CommandBuffer
         {
@@ -24,6 +25,7 @@ namespace MaltsHopDream
         static ShaderTagId litShaderTagId = new ShaderTagId("CustomLit");
 
         private static int
+            bufferSizeId = Shader.PropertyToID("_CameraBufferSize"),
             colorAttachmentId = Shader.PropertyToID("_CameraColorAttachment"),
             depthAttachmentId = Shader.PropertyToID("_CameraDepthAttachment"),
             colorTextureId = Shader.PropertyToID("_CameraColorTexture"),
@@ -32,12 +34,13 @@ namespace MaltsHopDream
             srcBlendId = Shader.PropertyToID("_CameraSrcBlend"),
             dstBlendId = Shader.PropertyToID("_CameraDstBlend");
 
-        bool useHDR;
+        private bool useHDR, useScaledRendering;
         private bool useColorTexture, useDepthTexture, useIntermediateBuffer;
         Lighting lighting = new();
         PostFXStack postFXStack = new();
         Texture2D missingTexture;
         static Rect fullViewRect = new Rect(0f, 0f, 1f, 1f);
+        Vector2Int bufferSize ;
         
         public CameraRenderer(Shader shader)
         {
@@ -51,7 +54,7 @@ namespace MaltsHopDream
             missingTexture.Apply(true, true);
         }
 
-        public void Render(ScriptableRenderContext context, Camera camera,
+        public void Render (ScriptableRenderContext context, Camera camera,
             CameraBufferSettings bufferSettings, bool useDynamicBating,
             bool useGPUInstancing,
             bool useLightPerObject,
@@ -78,9 +81,11 @@ namespace MaltsHopDream
             {
                 postFXSettings = cameraSettings.postFXSettings;
             }
-
-            PrepareForSceneWindow();
+            
+            float renderScale = cameraSettings.GetRenderScale(bufferSettings.renderScale);
+            useScaledRendering = renderScale < 0.99f || renderScale > 1.01f;
             PrepareBuffer();
+            PrepareForSceneWindow();
 
             if (!Cull(shadowSettings.maxDistance))
             {
@@ -88,12 +93,26 @@ namespace MaltsHopDream
             }
 
             useHDR = bufferSettings.allowHDR && camera.allowHDR;
+            if (useScaledRendering)
+            {
+                renderScale = Mathf.Clamp(renderScale, renderScaleMin, renderScaleMax);
+                bufferSize.x = (int)(camera.pixelWidth * renderScale);
+                bufferSize.y = (int)(camera.pixelHeight * renderScale);
+            }
+            else {
+                bufferSize.x = camera.pixelWidth;
+                bufferSize.y = camera.pixelHeight;
+            }
             buffer.BeginSample(SampleName);
+            buffer.SetGlobalVector(bufferSizeId, new Vector4(
+                1f / bufferSize.x, 1f / bufferSize.y,
+                bufferSize.x, bufferSize.y
+            ));
             ExecuteBuffer();
             lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject,
                 cameraSettings.maskLights ? cameraSettings.renderingLayerMask : -1);
-            postFXStack.Setup(context, camera, postFXSettings, useHDR, colorLUTResolution,
-                cameraSettings.finalBlendMode);
+            postFXStack.Setup(context, camera, bufferSize,postFXSettings, useHDR, colorLUTResolution,
+                cameraSettings.finalBlendMode, bufferSettings.bicubicRescaling);
             buffer.EndSample(SampleName);
             Setup();
             DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject,
@@ -120,7 +139,7 @@ namespace MaltsHopDream
             context.SetupCameraProperties(camera);
             CameraClearFlags flags = camera.clearFlags;
 
-            useIntermediateBuffer = useColorTexture || useDepthTexture || postFXStack.IsActive;
+            useIntermediateBuffer = useScaledRendering ||useColorTexture || useDepthTexture || postFXStack.IsActive;
             if (useIntermediateBuffer)
             {
                 if (flags > CameraClearFlags.Color)
@@ -129,11 +148,11 @@ namespace MaltsHopDream
                 }
 
                 buffer.GetTemporaryRT(
-                    colorAttachmentId, camera.pixelWidth, camera.pixelHeight,
+                    colorAttachmentId, bufferSize.x, bufferSize.y,
                     0, FilterMode.Bilinear,
                     useHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default);
                 buffer.GetTemporaryRT(
-                    depthAttachmentId, camera.pixelWidth, camera.pixelHeight,
+                    depthAttachmentId, bufferSize.x, bufferSize.y,
                     32, FilterMode.Point, RenderTextureFormat.Depth
                 );
                 buffer.SetRenderTarget(colorAttachmentId, RenderBufferLoadAction.DontCare,
@@ -246,7 +265,7 @@ namespace MaltsHopDream
         {
             if (useColorTexture) {
                 buffer.GetTemporaryRT(
-                    colorTextureId, camera.pixelWidth, camera.pixelHeight,
+                    colorTextureId, bufferSize.x,bufferSize.y,
                     0, FilterMode.Bilinear, useHDR ?
                         RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default
                 );
@@ -260,7 +279,7 @@ namespace MaltsHopDream
             if (useDepthTexture)
             {
                 buffer.GetTemporaryRT(
-                    depthTextureId, camera.pixelWidth, camera.pixelHeight,
+                    depthTextureId, bufferSize.x,bufferSize.y,
                     32, FilterMode.Point, RenderTextureFormat.Depth
                 );
                 if (copyTextureSupported)

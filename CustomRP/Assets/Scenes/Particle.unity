@@ -6072,7 +6072,7 @@ MonoBehaviour:
       destination: 0
     renderingLayerMask: -1
     maskLights: 1
-    overridePostFX: 1
+    overridePostFX: 0
     postFXSettings: {fileID: 11400000, guid: f70671c804684b1499c535c7ee7d87b6, type: 2}
     copyDepth: 1
     copyColor: 1
@@ -11964,7 +11964,7 @@ Transform:
   m_GameObject: {fileID: 1368168089}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 6}
+  m_LocalPosition: {x: 0.92, y: 0, z: 6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

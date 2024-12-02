@@ -12,7 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecc8a505947a04c44bb57589a0209b64, type: 3}
   m_Name: CustomSRPBase
   m_EditorClassIdentifier: 
-  allowHDR: 1
+  cameraBuffer:
+    allowHDR: 1
+    copyColor: 0
+    copyColorReflection: 0
+    copyDepth: 0
+    copyDepthReflection: 0
+    renderScale: 1
+    bicubicRescaling: 0
   useDynamicBating: 0
   useGPUInstancing: 1
   useSRPBatcher: 1
@@ -33,4 +40,5 @@ MonoBehaviour:
       atlasSize: 2048
       filter: 3
   postFXSettings: {fileID: 11400000, guid: d191e1d5732800d418a7b231c16e8ed9, type: 2}
+  cameraRendererShader: {fileID: 0}
   colorLUTResolution: 16
