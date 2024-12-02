@@ -11,6 +11,7 @@ Shader "MaltsHopDream/CustomRP/Particles/Unlit"
         [Toggle(_DISTORTION)] _Distortion ("Distortion", Float) = 0
         [NoScaleOffset] _DistortionMap("Distortion Vectors", 2D) = "bumb" {}
         _DistortionStrength("Distortion Strength", Range(0.0, 0.2)) = 0.1
+        _DistortionBlend("Distortion Blend", Range(0.0, 1.0)) = 1
         _SoftParticlesDistance ("Soft Particles Distance", Range(0.0, 10.0)) = 0
         _SoftParticlesRange ("Soft Particles Range", Range(0.01, 10.0)) = 1
         _NearFadeDistance ("Near Fade Distance", Range(0.0, 10.0)) = 1

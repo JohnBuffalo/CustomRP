@@ -14,6 +14,7 @@ UNITY_DEFINE_INSTANCED_PROP(float, _NearFadeRange)
 UNITY_DEFINE_INSTANCED_PROP(float, _SoftParticlesDistance)
 UNITY_DEFINE_INSTANCED_PROP(float, _SoftParticlesRange)
 UNITY_DEFINE_INSTANCED_PROP(float, _DistortionStrength)
+UNITY_DEFINE_INSTANCED_PROP(float, _DistortionBlend)
 UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff)
 UNITY_DEFINE_INSTANCED_PROP(float, _ZWrite)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
@@ -75,6 +76,10 @@ float GetSmoothness(InputConfig c)
 float GetFresnel(InputConfig c)
 {
     return 0.0;
+}
+
+float GetDistortionBlend (InputConfig c) {
+    return INPUT_PROP(_DistortionBlend);
 }
 
 float2 GetDistortion (InputConfig c) {
