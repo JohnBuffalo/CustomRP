@@ -40,8 +40,8 @@ namespace MaltsHopDream
         PostFXStack postFXStack = new();
         Texture2D missingTexture;
         static Rect fullViewRect = new Rect(0f, 0f, 1f, 1f);
-        Vector2Int bufferSize ;
-        
+        Vector2Int bufferSize;
+
         public CameraRenderer(Shader shader)
         {
             material = CoreUtils.CreateEngineMaterial(shader);
@@ -54,7 +54,7 @@ namespace MaltsHopDream
             missingTexture.Apply(true, true);
         }
 
-        public void Render (ScriptableRenderContext context, Camera camera,
+        public void Render(ScriptableRenderContext context, Camera camera,
             CameraBufferSettings bufferSettings, bool useDynamicBating,
             bool useGPUInstancing,
             bool useLightPerObject,
@@ -81,7 +81,7 @@ namespace MaltsHopDream
             {
                 postFXSettings = cameraSettings.postFXSettings;
             }
-            
+
             float renderScale = cameraSettings.GetRenderScale(bufferSettings.renderScale);
             useScaledRendering = renderScale < 0.99f || renderScale > 1.01f;
             PrepareBuffer();
@@ -96,13 +96,15 @@ namespace MaltsHopDream
             if (useScaledRendering)
             {
                 renderScale = Mathf.Clamp(renderScale, renderScaleMin, renderScaleMax);
-                bufferSize.x = (int)(camera.pixelWidth * renderScale);
-                bufferSize.y = (int)(camera.pixelHeight * renderScale);
+                bufferSize.x = (int) (camera.pixelWidth * renderScale);
+                bufferSize.y = (int) (camera.pixelHeight * renderScale);
             }
-            else {
+            else
+            {
                 bufferSize.x = camera.pixelWidth;
                 bufferSize.y = camera.pixelHeight;
             }
+
             buffer.BeginSample(SampleName);
             buffer.SetGlobalVector(bufferSizeId, new Vector4(
                 1f / bufferSize.x, 1f / bufferSize.y,
@@ -111,8 +113,11 @@ namespace MaltsHopDream
             ExecuteBuffer();
             lighting.Setup(context, cullingResults, shadowSettings, useLightPerObject,
                 cameraSettings.maskLights ? cameraSettings.renderingLayerMask : -1);
-            postFXStack.Setup(context, camera, bufferSize,postFXSettings, useHDR, colorLUTResolution,
-                cameraSettings.finalBlendMode, bufferSettings.bicubicRescaling);
+
+            bufferSettings.fxaa.enabled &= cameraSettings.allowFXAA;
+            postFXStack.Setup(
+                context, camera, bufferSize, postFXSettings, useHDR, colorLUTResolution,
+                cameraSettings.finalBlendMode, bufferSettings.bicubicRescaling, bufferSettings.fxaa);
             buffer.EndSample(SampleName);
             Setup();
             DrawVisibleGeometry(useDynamicBating, useGPUInstancing, useLightPerObject,
@@ -139,7 +144,7 @@ namespace MaltsHopDream
             context.SetupCameraProperties(camera);
             CameraClearFlags flags = camera.clearFlags;
 
-            useIntermediateBuffer = useScaledRendering ||useColorTexture || useDepthTexture || postFXStack.IsActive;
+            useIntermediateBuffer = useScaledRendering || useColorTexture || useDepthTexture || postFXStack.IsActive;
             if (useIntermediateBuffer)
             {
                 if (flags > CameraClearFlags.Color)
@@ -263,23 +268,26 @@ namespace MaltsHopDream
 
         void CopyAttachments()
         {
-            if (useColorTexture) {
+            if (useColorTexture)
+            {
                 buffer.GetTemporaryRT(
-                    colorTextureId, bufferSize.x,bufferSize.y,
-                    0, FilterMode.Bilinear, useHDR ?
-                        RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default
+                    colorTextureId, bufferSize.x, bufferSize.y,
+                    0, FilterMode.Bilinear, useHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default
                 );
-                if (copyTextureSupported) {
+                if (copyTextureSupported)
+                {
                     buffer.CopyTexture(colorAttachmentId, colorTextureId);
                 }
-                else {
+                else
+                {
                     Draw(colorAttachmentId, colorTextureId);
                 }
             }
+
             if (useDepthTexture)
             {
                 buffer.GetTemporaryRT(
-                    depthTextureId, bufferSize.x,bufferSize.y,
+                    depthTextureId, bufferSize.x, bufferSize.y,
                     32, FilterMode.Point, RenderTextureFormat.Depth
                 );
                 if (copyTextureSupported)
@@ -311,14 +319,17 @@ namespace MaltsHopDream
                 Matrix4x4.identity, material, isDepth ? 1 : 0, MeshTopology.Triangles, 3
             );
         }
-        void DrawFinal (CameraSettings.FinalBlendMode finalBlendMode) {
-            buffer.SetGlobalFloat(srcBlendId, (float)finalBlendMode.source);
-            buffer.SetGlobalFloat(dstBlendId, (float)finalBlendMode.destination);
+
+        void DrawFinal(CameraSettings.FinalBlendMode finalBlendMode)
+        {
+            buffer.SetGlobalFloat(srcBlendId, (float) finalBlendMode.source);
+            buffer.SetGlobalFloat(dstBlendId, (float) finalBlendMode.destination);
             buffer.SetGlobalTexture(sourceTextureId, colorAttachmentId);
             buffer.SetRenderTarget(
                 BuiltinRenderTextureType.CameraTarget,
-                finalBlendMode.destination == BlendMode.Zero && camera.rect == fullViewRect?
-                    RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load,
+                finalBlendMode.destination == BlendMode.Zero && camera.rect == fullViewRect
+                    ? RenderBufferLoadAction.DontCare
+                    : RenderBufferLoadAction.Load,
                 RenderBufferStoreAction.Store
             );
             buffer.SetViewport(camera.pixelRect);

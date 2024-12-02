@@ -30,6 +30,7 @@ namespace MaltsHopDream
         public bool maskLights = false;
         public bool overridePostFX = false;
         public PostFXSettings postFXSettings = default;
+        public bool allowFXAA = false;
         public bool copyDepth = true;
         public bool copyColor = true;
 

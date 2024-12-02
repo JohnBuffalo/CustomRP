@@ -22,8 +22,9 @@ namespace MaltsHopDream
             ColorGradingNeutral,
             ColorGradingReinhard,
             Copy,
-            Final,
-            FinalRescale
+            ApplyColorGrading,
+            FinalRescale,
+            FXAA,
         }
 
         private Vector2Int bufferSize;
@@ -32,6 +33,7 @@ namespace MaltsHopDream
 
         private int
             copyBicubicId = Shader.PropertyToID("_CopyBicubic"),
+            colorGradingResultId = Shader.PropertyToID("_ColorGradingResult"),
             finalResultId = Shader.PropertyToID("_FinalResult"),
             bloomBucibicUpsamplingId = Shader.PropertyToID("_BloomBicubicUpsampling"),
             bloomIntensityId = Shader.PropertyToID("_BloomIntensity"),
@@ -84,16 +86,19 @@ namespace MaltsHopDream
         private CameraSettings.FinalBlendMode finalBlendMode;
 
         private BicubicRescalingMode bicubicRescaling;
-        
+
+        private FXAA fxaa;
+
         public void Setup(ScriptableRenderContext context, Camera camera, Vector2Int bufferSize,
-            PostFXSettings settings, bool useHDR,
-            int colorLUTResolution, CameraSettings.FinalBlendMode finalBlendMode, BicubicRescalingMode bicubicRescaling)
+            PostFXSettings settings, bool useHDR, int colorLUTResolution,
+            CameraSettings.FinalBlendMode finalBlendMode, BicubicRescalingMode bicubicRescaling, FXAA fxaa)
         {
             if (settings == null)
             {
                 return;
             }
 
+            this.fxaa = fxaa;
             this.bicubicRescaling = bicubicRescaling;
             this.context = context;
             this.camera = camera;
@@ -115,12 +120,12 @@ namespace MaltsHopDream
         {
             if (DoBloom(sourceId))
             {
-                DoColorGradingAndToneMapping(bloomResultId);
+                DoFinal(bloomResultId);
                 buffer.ReleaseTemporaryRT(bloomResultId);
             }
             else
             {
-                DoColorGradingAndToneMapping(sourceId);
+                DoFinal(sourceId);
             }
 
             context.ExecuteCommandBuffer(buffer);
@@ -306,7 +311,7 @@ namespace MaltsHopDream
             ));
         }
 
-        void DoColorGradingAndToneMapping(int sourceId)
+        void DoFinal(int sourceId)
         {
             ConfigureColorAdjustments();
             ConfigureWhiteBalance();
@@ -330,19 +335,42 @@ namespace MaltsHopDream
             buffer.SetGlobalVector(colorGradingLUTParametersId,
                 new Vector4(1f / lutWidth, 1f / lutHeight, lutHeight - 1f)
             );
+            buffer.SetGlobalFloat(finalSrcBlendId, 1f);
+            buffer.SetGlobalFloat(finalDstBlendId, 0f);
+            if (fxaa.enabled)
+            {
+                buffer.GetTemporaryRT(colorGradingResultId, bufferSize.x, bufferSize.y, 0,
+                    FilterMode.Bilinear, RenderTextureFormat.Default);
+                Draw(sourceId, colorGradingResultId, Pass.ApplyColorGrading);
+            }
+
             if (bufferSize.x == camera.pixelWidth)
             {
-                DrawFinal(sourceId, Pass.Final);
+                if (fxaa.enabled)
+                {
+                    DrawFinal(colorGradingResultId, Pass.FXAA);
+                    buffer.ReleaseTemporaryRT(colorGradingResultId);
+                }
+                else
+                {
+                    DrawFinal(sourceId, Pass.ApplyColorGrading);
+                }
             }
             else
             {
-                buffer.SetGlobalFloat(finalSrcBlendId, 1f);
-                buffer.SetGlobalFloat(finalDstBlendId, 0f);
                 buffer.GetTemporaryRT(
                     finalResultId, bufferSize.x, bufferSize.y, 0,
                     FilterMode.Bilinear, RenderTextureFormat.Default
                 );
-                Draw(sourceId, finalResultId, Pass.Final);
+                if (fxaa.enabled)
+                { 
+                    Draw(colorGradingResultId, finalResultId, Pass.FXAA);
+                    buffer.ReleaseTemporaryRT(colorGradingResultId);
+                }
+                else
+                {
+                    Draw(sourceId, finalResultId, Pass.ApplyColorGrading);
+                }
                 bool bicubicSampling =
                     bicubicRescaling == BicubicRescalingMode.UpAndDown ||
                     bicubicRescaling == BicubicRescalingMode.UpAndDown ||

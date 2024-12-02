@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
-
+using System;
 namespace MaltsHopDream
 {
-    [System.Serializable]
+    [Serializable]
     public struct CameraBufferSettings
     {
         public bool allowHDR;
@@ -13,5 +13,13 @@ namespace MaltsHopDream
         public enum BicubicRescalingMode { Off, UpOnly, UpAndDown }
 
         public BicubicRescalingMode bicubicRescaling;
+
+        [Serializable]
+        public struct FXAA
+        {
+            public bool enabled;
+        }
+
+        public FXAA fxaa;
     }
 }
