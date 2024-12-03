@@ -25,6 +25,8 @@ namespace MaltsHopDream
             ApplyColorGrading,
             FinalRescale,
             FXAA,
+            FXAAWithLuma,
+            ApplyColorGradingWithLuma,
         }
 
         private Vector2Int bufferSize;
@@ -72,7 +74,7 @@ namespace MaltsHopDream
 
         private PostFXSettings settings;
 
-        private bool useHDR;
+        private bool keepAlpha, useHDR;
         public bool IsActive => settings != null;
 
         #region Bloom
@@ -90,7 +92,7 @@ namespace MaltsHopDream
         private FXAA fxaa;
 
         public void Setup(ScriptableRenderContext context, Camera camera, Vector2Int bufferSize,
-            PostFXSettings settings, bool useHDR, int colorLUTResolution,
+            PostFXSettings settings, bool keepAlpha, bool useHDR, int colorLUTResolution,
             CameraSettings.FinalBlendMode finalBlendMode, BicubicRescalingMode bicubicRescaling, FXAA fxaa)
         {
             if (settings == null)
@@ -104,6 +106,7 @@ namespace MaltsHopDream
             this.camera = camera;
             this.settings = camera.cameraType <= CameraType.SceneView ? settings : null;
             this.useHDR = useHDR;
+            this.keepAlpha = keepAlpha;
             this.colorLUTResolution = colorLUTResolution;
             this.finalBlendMode = finalBlendMode;
             this.bufferSize = bufferSize;
@@ -341,14 +344,16 @@ namespace MaltsHopDream
             {
                 buffer.GetTemporaryRT(colorGradingResultId, bufferSize.x, bufferSize.y, 0,
                     FilterMode.Bilinear, RenderTextureFormat.Default);
-                Draw(sourceId, colorGradingResultId, Pass.ApplyColorGrading);
+                var usingPass = keepAlpha ? Pass.ApplyColorGrading : Pass.ApplyColorGradingWithLuma;
+                Draw(sourceId, colorGradingResultId, usingPass);
             }
 
             if (bufferSize.x == camera.pixelWidth)
             {
                 if (fxaa.enabled)
                 {
-                    DrawFinal(colorGradingResultId, Pass.FXAA);
+                    var usingPass = keepAlpha ? Pass.FXAA : Pass.FXAAWithLuma;
+                    DrawFinal(colorGradingResultId, usingPass);
                     buffer.ReleaseTemporaryRT(colorGradingResultId);
                 }
                 else
@@ -363,14 +368,16 @@ namespace MaltsHopDream
                     FilterMode.Bilinear, RenderTextureFormat.Default
                 );
                 if (fxaa.enabled)
-                { 
-                    Draw(colorGradingResultId, finalResultId, Pass.FXAA);
+                {
+                    var usingPass = keepAlpha ? Pass.FXAA : Pass.FXAAWithLuma;
+                    Draw(colorGradingResultId, finalResultId, usingPass);
                     buffer.ReleaseTemporaryRT(colorGradingResultId);
                 }
                 else
                 {
                     Draw(sourceId, finalResultId, Pass.ApplyColorGrading);
                 }
+
                 bool bicubicSampling =
                     bicubicRescaling == BicubicRescalingMode.UpAndDown ||
                     bicubicRescaling == BicubicRescalingMode.UpAndDown ||
