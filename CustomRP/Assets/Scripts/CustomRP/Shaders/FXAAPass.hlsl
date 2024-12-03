@@ -11,7 +11,7 @@ struct LumaNeighborhood {
 
 bool CanSkipFXAA (LumaNeighborhood luma)
 {
-    return luma.range < _FXAAConfig.x;
+    return luma.range < max(_FXAAConfig.x, _FXAAConfig.y * luma.highest);
 }
 
 
