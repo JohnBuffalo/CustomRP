@@ -18,6 +18,8 @@ namespace MaltsHopDream
         public struct FXAA
         {
             public bool enabled;
+            [Range(0.0312f, 0.0833f)]
+            public float fixedThreshold;
         }
 
         public FXAA fxaa;

@@ -60,7 +60,8 @@ namespace MaltsHopDream
             colorGradingLUTInLogId = Shader.PropertyToID("_ColorGradingLUTInLogC"),
             fxSource2Id = Shader.PropertyToID("_PostFXSource2"),
             finalSrcBlendId = Shader.PropertyToID("_FinalSrcBlend"),
-            finalDstBlendId = Shader.PropertyToID("_FinalDstBlend");
+            finalDstBlendId = Shader.PropertyToID("_FinalDstBlend"),
+            fxaaConfigId = Shader.PropertyToID("_FXAAConfig");
 
 
         private CommandBuffer buffer = new CommandBuffer()
@@ -342,6 +343,7 @@ namespace MaltsHopDream
             buffer.SetGlobalFloat(finalDstBlendId, 0f);
             if (fxaa.enabled)
             {
+                buffer.SetGlobalVector(fxaaConfigId, new Vector4(fxaa.fixedThreshold, 0f));
                 buffer.GetTemporaryRT(colorGradingResultId, bufferSize.x, bufferSize.y, 0,
                     FilterMode.Bilinear, RenderTextureFormat.Default);
                 var usingPass = keepAlpha ? Pass.ApplyColorGrading : Pass.ApplyColorGradingWithLuma;

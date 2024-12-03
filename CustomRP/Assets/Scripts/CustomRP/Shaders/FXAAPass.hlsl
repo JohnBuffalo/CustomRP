@@ -1,10 +1,19 @@
 ﻿#ifndef CUSTOM_FXAA_PASS_INCLUDED
 #define CUSTOM_FXAA_PASS_INCLUDED
 
+float4 _FXAAConfig;
+
+
 struct LumaNeighborhood {
     float m, n, e, s, w;
     float highest, lowest, range;
 };
+
+bool CanSkipFXAA (LumaNeighborhood luma)
+{
+    return luma.range < _FXAAConfig.x;
+}
+
 
 float GetLuma (float2 uv, float uOffset = 0.0 ,float vOffset = 0.0)
 {
@@ -35,6 +44,10 @@ LumaNeighborhood GetLumaNeighborhood (float2 uv) {
 float4 FXAAPassFragment(Varyings input) : SV_TARGET
 {
     LumaNeighborhood luma = GetLumaNeighborhood(input.screenUV);
+    if (CanSkipFXAA(luma))
+    {
+        return 0.0;
+    }
     return luma.range;
 }
 
