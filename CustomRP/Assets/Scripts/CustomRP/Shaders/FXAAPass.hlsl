@@ -1,13 +1,17 @@
 ﻿#ifndef CUSTOM_FXAA_PASS_INCLUDED
 #define CUSTOM_FXAA_PASS_INCLUDED
 
+struct LumaNeighborhood {
+    float m, n, e, s, w;
+    float highest, lowest, range;
+};
 
-float GetLuma (float2 uv)
+float GetLuma (float2 uv, float uOffset = 0.0 ,float vOffset = 0.0)
 {
     // return Luminance(GetSource(uv)); // 获取亮度
     // return sqrt(Luminance(GetSource(uv))); //人眼对暗部变化更敏锐
     // return GetSource(uv).g; //人眼对绿色更敏锐
-
+    uv += float2(uOffset,vOffset) * GetSourceTexelSize().xy;
     #if defined(FXAA_ALPHA_CONTAINS_LUMA)
         return GetSource(uv).a;
     #else
@@ -15,9 +19,23 @@ float GetLuma (float2 uv)
     #endif  
 }
 
+LumaNeighborhood GetLumaNeighborhood (float2 uv) {
+    LumaNeighborhood luma;
+    luma.m = GetLuma(uv);
+    luma.n = GetLuma(uv, 0.0, 1.0);
+    luma.e = GetLuma(uv, 1.0, 0.0);
+    luma.s = GetLuma(uv, 0.0, -1.0);
+    luma.w = GetLuma(uv, -1.0, 0.0);
+    luma.highest = max(max(max(max(luma.m, luma.n), luma.e), luma.s), luma.w);
+    luma.lowest = min(min(min(min(luma.m, luma.n), luma.e), luma.s), luma.w);
+    luma.range = luma.highest - luma.lowest;
+    return luma;
+}
+
 float4 FXAAPassFragment(Varyings input) : SV_TARGET
 {
-    return GetLuma(input.screenUV);
+    LumaNeighborhood luma = GetLumaNeighborhood(input.screenUV);
+    return luma.range;
 }
 
 #endif

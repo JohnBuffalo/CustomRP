@@ -5652,7 +5652,7 @@ Transform:
   m_GameObject: {fileID: 345596592}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalPosition: {x: -1.28, y: -1, z: -6.23}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6075,6 +6075,7 @@ MonoBehaviour:
     overridePostFX: 0
     postFXSettings: {fileID: 11400000, guid: f70671c804684b1499c535c7ee7d87b6, type: 2}
     allowFXAA: 1
+    keepAlpha: 0
     copyDepth: 1
     copyColor: 1
     renderScaleMode: 0

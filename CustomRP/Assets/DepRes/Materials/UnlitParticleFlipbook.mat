@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _CLIPPING
   - _DISTORTION
   - _FLIPBOOK_BLENDING
   - _NEAR_FADE
@@ -75,12 +76,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _Clipping: 0
-    - _Cutoff: 0.35
+    - _Clipping: 1
+    - _Cutoff: 0.105
     - _DetailNormalMapScale: 1
     - _Distortion: 1
     - _DistortionBlend: 1
-    - _DistortionStrength: 0.013
+    - _DistortionStrength: 0.022
     - _DstBlend: 10
     - _FlipbookBlending: 1
     - _GlossMapScale: 1
@@ -89,21 +90,21 @@ Material:
     - _Metallic: 0
     - _Mode: 0
     - _NearFade: 1
-    - _NearFadeDistance: 6.49
-    - _NearFadeRange: 6.14
+    - _NearFadeDistance: 0.71
+    - _NearFadeRange: 3.04
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SoftParticles: 1
-    - _SoftParticlesDistance: 0
-    - _SoftParticlesRange: 1
+    - _SoftParticlesDistance: 0.98
+    - _SoftParticlesRange: 6.52
     - _SpecularHighlights: 1
     - _SrcBlend: 5
     - _UVSec: 0
     - _VertexColors: 1
-    - _ZWrite: 0
+    - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.5377358, g: 0.21961257, b: 0.03804734, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
