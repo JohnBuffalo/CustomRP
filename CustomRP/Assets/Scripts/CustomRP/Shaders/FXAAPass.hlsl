@@ -65,7 +65,7 @@ float GetSubpixelBlendFactor(LumaNeighborhood luma)
     filter = abs(filter - luma.m);
     filter = saturate(filter / luma.range);
     filter = smoothstep(0, 1, filter);
-    return filter * filter;
+    return filter * filter * _FXAAConfig.z;;
 }
 
 float GetLuma(float2 uv, float uOffset = 0.0, float vOffset = 0.0)
