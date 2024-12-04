@@ -23,7 +23,7 @@ MonoBehaviour:
     fxaa:
       enabled: 1
       fixedThreshold: 0.0833
-      relativeThreshold: 0.166
+      relativeThreshold: 0.333
   useDynamicBating: 0
   useGPUInstancing: 1
   useSRPBatcher: 1
