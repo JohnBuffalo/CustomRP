@@ -18,6 +18,13 @@ namespace MaltsHopDream
             UpAndDown
         }
 
+        public enum Quality
+        {
+            Low,
+            Medium,
+            High
+        }
+
         public BicubicRescalingMode bicubicRescaling;
 
         [Serializable]
@@ -53,6 +60,9 @@ namespace MaltsHopDream
             ///   0.00 - completely off
             /// </summary>
             [Range(0f, 1f)] public float subpixelBlending;
+            
+            public Quality quality;
+
         }
 
         public FXAA fxaa;

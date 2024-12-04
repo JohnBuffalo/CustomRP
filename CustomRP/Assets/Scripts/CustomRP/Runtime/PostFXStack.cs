@@ -63,6 +63,9 @@ namespace MaltsHopDream
             finalDstBlendId = Shader.PropertyToID("_FinalDstBlend"),
             fxaaConfigId = Shader.PropertyToID("_FXAAConfig");
 
+        private const string
+            fxaaQualityLowKeyword = "FXAA_QUALITY_LOW",
+            fxaaQualityMediumKeyword = "FXAA_QUALITY_MEDIUM";
 
         private CommandBuffer buffer = new CommandBuffer()
         {
@@ -315,6 +318,26 @@ namespace MaltsHopDream
             ));
         }
 
+        void ConfigureFXAA()
+        {
+            if (fxaa.quality == Quality.Low)
+            {
+                buffer.EnableShaderKeyword(fxaaQualityLowKeyword);
+                buffer.DisableShaderKeyword(fxaaQualityMediumKeyword);
+            }else if (fxaa.quality == Quality.Medium)
+            {
+                buffer.EnableShaderKeyword(fxaaQualityMediumKeyword);
+                buffer.DisableShaderKeyword(fxaaQualityLowKeyword);
+            }
+            else
+            {
+                buffer.DisableShaderKeyword(fxaaQualityMediumKeyword);
+                buffer.DisableShaderKeyword(fxaaQualityLowKeyword);
+            }
+            buffer.SetGlobalVector(fxaaConfigId, new Vector4(
+                fxaa.fixedThreshold, fxaa.relativeThreshold, fxaa.subpixelBlending));
+        }
+
         void DoFinal(int sourceId)
         {
             ConfigureColorAdjustments();
@@ -343,7 +366,7 @@ namespace MaltsHopDream
             buffer.SetGlobalFloat(finalDstBlendId, 0f);
             if (fxaa.enabled)
             {
-                buffer.SetGlobalVector(fxaaConfigId, new Vector4(fxaa.fixedThreshold, fxaa.relativeThreshold, fxaa.subpixelBlending));
+                ConfigureFXAA();
                 buffer.GetTemporaryRT(colorGradingResultId, bufferSize.x, bufferSize.y, 0,
                     FilterMode.Bilinear, RenderTextureFormat.Default);
                 var usingPass = keepAlpha ? Pass.ApplyColorGrading : Pass.ApplyColorGradingWithLuma;

@@ -22,9 +22,10 @@ MonoBehaviour:
     bicubicRescaling: 2
     fxaa:
       enabled: 1
-      fixedThreshold: 0.0833
-      relativeThreshold: 0.333
+      fixedThreshold: 0.0312
+      relativeThreshold: 0.063
       subpixelBlending: 1
+      quality: 1
   useDynamicBating: 0
   useGPUInstancing: 1
   useSRPBatcher: 1
