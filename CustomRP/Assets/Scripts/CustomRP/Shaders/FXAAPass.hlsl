@@ -111,23 +111,47 @@ float GetEdgeBlendFactor(LumaNeighborhood luma, FXAAEdge edge, float2 uv)
     float2 uvP = edgeUV + uvStep;
     float lumaGradientP = abs(GetLuma(uvP) - edgeLuma);
     bool atEndP = lumaGradientP >= gradientThreshold;
-
-    for (int i = 0; i < 99 && !atEndP; i++)
+    int i, iterCount = 99;
+    for (i = 0; i < iterCount && !atEndP; i++)
     {
         uvP += uvStep;
         lumaGradientP = abs(GetLuma(uvP) - edgeLuma);
         atEndP = lumaGradientP >= gradientThreshold;
     }
 
-    float distanceToEndP;
-    if (edge.isHorizontal) {
-        distanceToEndP = uvP.x - uv.x;
-    }
-    else {
-        distanceToEndP = uvP.y - uv.y;
-    }
+    float2 uvN = edgeUV - uvStep;
+    float lumaGradientN = abs(GetLuma(uvN) - edgeLuma);
+    bool atEndN = lumaGradientN >= gradientThreshold;
     
-    return 10*distanceToEndP;
+    for (i = 0; i < iterCount && !atEndN; i++)
+    {
+        uvN -=uvStep;
+        lumaGradientN = abs(GetLuma(uvN) - edgeLuma);
+        atEndN = lumaGradientN >= gradientThreshold;
+    }
+
+    float distanceToEndP, distanceToEndN;
+    if (edge.isHorizontal)
+    {
+        distanceToEndP = uvP.x - uv.x;
+        distanceToEndN = uv.x - uvN.x;
+    }
+    else
+    {
+        distanceToEndP = uvP.y - uv.y;
+        distanceToEndN = uv.y - uvN.y;
+    }
+
+    float distanceToNearestEnd;
+    if(distanceToEndP <= distanceToEndN)
+    {
+        distanceToNearestEnd = distanceToEndP;
+    }else
+    {
+        distanceToNearestEnd = distanceToEndN;
+    }
+
+    return 10*distanceToNearestEnd;
 }
 
 LumaNeighborhood GetLumaNeighborhood(float2 uv)
