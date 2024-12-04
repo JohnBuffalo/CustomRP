@@ -32,22 +32,18 @@ bool IsHorizontalEdge(LumaNeighborhood luma)
     return horizontal >= vertical;
 }
 
-float GetEdgeBlendFactor (LumaNeighborhood luma, FXAAEdge edge, float2 uv)
-{
-    return edge.lumaGradient;
-}
-
-FXAAEdge GetFXAAEdge (LumaNeighborhood luma)
+FXAAEdge GetFXAAEdge(LumaNeighborhood luma)
 {
     FXAAEdge edge;
     float lumaP, lumaN;
     edge.isHorizontal = IsHorizontalEdge(luma);
-    if(edge.isHorizontal)
+    if (edge.isHorizontal)
     {
         edge.pixelStep = GetSourceTexelSize().y;
         lumaP = luma.n;
         lumaN = luma.s;
-    }else
+    }
+    else
     {
         edge.pixelStep = GetSourceTexelSize().x;
         lumaP = luma.e;
@@ -55,13 +51,14 @@ FXAAEdge GetFXAAEdge (LumaNeighborhood luma)
     }
     float gradientP = abs(lumaP - luma.m);
     float gradientN = abs(lumaN - luma.m);
-    
-    if(gradientP < gradientN)
+
+    if (gradientP < gradientN)
     {
         edge.pixelStep = -edge.pixelStep;
         edge.lumaGradient = gradientN;
         edge.otherLuma = lumaN;
-    }else
+    }
+    else
     {
         edge.lumaGradient = gradientP;
         edge.otherLuma = lumaP;
@@ -91,6 +88,46 @@ float GetLuma(float2 uv, float uOffset = 0.0, float vOffset = 0.0)
     #else
         return GetSource(uv).g;
     #endif
+}
+
+float GetEdgeBlendFactor(LumaNeighborhood luma, FXAAEdge edge, float2 uv)
+{
+    float2 edgeUV = uv;
+    float2 uvStep = 0.0;
+    if (edge.isHorizontal)
+    {
+        edgeUV.y += 0.5 * edge.pixelStep;
+        uvStep.x = GetSourceTexelSize().x;
+    }
+    else
+    {
+        edgeUV.x += 0.5 * edge.pixelStep;
+        uvStep.y = GetSourceTexelSize().y;
+    }
+
+    float edgeLuma = 0.5 * (luma.m + edge.otherLuma);
+    float gradientThreshold = 0.25 * edge.lumaGradient;
+
+    float2 uvP = edgeUV + uvStep;
+    float lumaGradientP = abs(GetLuma(uvP) - edgeLuma);
+    bool atEndP = lumaGradientP >= gradientThreshold;
+
+    for (int i = 0; i < 99 && !atEndP; i++)
+    {
+        uvP += uvStep;
+        lumaGradientP = abs(GetLuma(uvP) - edgeLuma);
+        atEndP = lumaGradientP >= gradientThreshold;
+    }
+
+    float distanceToEndP;
+    if (edge.isHorizontal) {
+        distanceToEndP = uvP.x - uv.x;
+    }
+    else {
+        distanceToEndP = uvP.y - uv.y;
+    }
+    
+    return 10*distanceToEndP;
 }
 
 LumaNeighborhood GetLumaNeighborhood(float2 uv)
@@ -124,15 +161,16 @@ float4 FXAAPassFragment(Varyings input) : SV_TARGET
     float blendFactor = GetEdgeBlendFactor(luma, edge, input.screenUV);
     return blendFactor;
     float2 blendUV = input.screenUV;
-    if(edge.isHorizontal)
+    if (edge.isHorizontal)
     {
         blendUV.y += blendFactor * edge.pixelStep;
-    }else
+    }
+    else
     {
         blendUV.x += blendFactor * edge.pixelStep;
     }
     return GetSource(blendUV);
-    
+
     // return edge.pixelStep > 0.0 ? float4(1.0, 0.0, 0.0, 0.0) : 1.0;
 }
 
